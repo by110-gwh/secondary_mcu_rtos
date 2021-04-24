@@ -1,0 +1,28 @@
+--cpu=Cortex-M4.fp
+"401\croutine.o"
+"401\event_groups.o"
+"401\list.o"
+"401\queue.o"
+"401\stream_buffer.o"
+"401\tasks.o"
+"401\timers.o"
+"401\heap_4.o"
+"401\port.o"
+"401\stm32f4xx_hal.o"
+"401\stm32f4xx_hal_cortex.o"
+"401\stm32f4xx_hal_dma.o"
+"401\stm32f4xx_hal_flash.o"
+"401\stm32f4xx_hal_flash_ex.o"
+"401\stm32f4xx_hal_gpio.o"
+"401\stm32f4xx_hal_rcc.o"
+"401\stm32f4xx_hal_tim.o"
+"401\stm32f4xx_hal_tim_ex.o"
+"401\main.o"
+"401\stm32f4xx_hal_timebase_tim.o"
+"401\stm32f4xx_it.o"
+"401\system_stm32f4xx.o"
+"401\startup_stm32f401xc.o"
+--library_type=microlib --strict --scatter "401\secondary_mcu_rtos.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "secondary_mcu_rtos.map" -o 401\secondary_mcu_rtos.axf
