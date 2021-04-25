@@ -1,5 +1,5 @@
 #include "main.h"
-
+#include "steering.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -17,6 +17,10 @@ void SystemClock_Config(void);
 portTASK_FUNCTION(vStartTask, pvParameters)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	
+	uint8_t i;
+	steering_init();
+	
 	//使能GPIOC时钟
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	//初始化IO引脚
@@ -29,7 +33,13 @@ portTASK_FUNCTION(vStartTask, pvParameters)
 	
 	while (1) {
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+		for (i = 0; i < 16; i++) {
+			steering_pulse_ch[i] = i * 100 + 500;
+		}
 		vTaskDelay(1000);
+		for (i = 0; i < 16; i++) {
+			steering_pulse_ch[i] = i * 100 + 2000;
+		}
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 		vTaskDelay(1000);
 	}
