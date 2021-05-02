@@ -1,5 +1,6 @@
 #include "main.h"
-#include "steering.h"
+#include "steering_task.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -18,8 +19,7 @@ portTASK_FUNCTION(vStartTask, pvParameters)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	
-	uint8_t i;
-	steering_init();
+	steering_task_create();
 	
 	//使能GPIOC时钟
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -30,16 +30,9 @@ portTASK_FUNCTION(vStartTask, pvParameters)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-	
 	while (1) {
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-		for (i = 0; i < 16; i++) {
-			steering_pulse_ch[i] = i * 100 + 500;
-		}
 		vTaskDelay(1000);
-		for (i = 0; i < 16; i++) {
-			steering_pulse_ch[i] = i * 100 + 2000;
-		}
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 		vTaskDelay(1000);
 	}
@@ -101,7 +94,7 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLM = 25;
 	RCC_OscInitStruct.PLL.PLLN = 336;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-	RCC_OscInitStruct.PLL.PLLQ = 4;
+	RCC_OscInitStruct.PLL.PLLQ = 7;
 	while (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK);
 	//初始化CPU，AHB和APB时钟
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;

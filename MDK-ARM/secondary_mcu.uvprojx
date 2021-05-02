@@ -312,7 +312,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -336,9 +336,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32F401xC</Define>
+              <Define>USE_HAL_DRIVER,STM32F401xC,HID_ENDPOINT</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\DRIVER;..\FREERTOS\include;..\FREERTOS\portable\RVDS\ARM_CM4F;..\STM32F4xx_HAL_Driver\Inc;..\SYSTEM</IncludePath>
+              <IncludePath>..\CMSIS;..\DRIVER;..\FREERTOS\include;..\FREERTOS\portable\RVDS\ARM_CM4F;..\STM32F4xx_HAL_Driver\Inc;..\SYSTEM;..\USB\hid;..\USB\STM32_USB_Device_Library\Class\CustomHID\Inc;..\USB\STM32_USB_Device_Library\Core\Inc;..\USB\USB_DEVICE;..\TASK</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -386,9 +386,9 @@
           <GroupName>driver</GroupName>
           <Files>
             <File>
-              <FileName>steering.c</FileName>
+              <FileName>steering_pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\DRIVER\steering.c</FilePath>
+              <FilePath>..\DRIVER\steering_pwm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -479,6 +479,16 @@
               <FilePath>..\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_gpio.c</FilePath>
             </File>
             <File>
+              <FileName>stm32f4xx_hal_pcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_pcd_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pcd_ex.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f4xx_hal_rcc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rcc.c</FilePath>
@@ -492,6 +502,11 @@
               <FileName>stm32f4xx_hal_tim_ex.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_tim_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_ll_usb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_usb.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -522,6 +537,61 @@
               <FileName>startup_stm32f401xc.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\CMSIS\startup_stm32f401xc.s</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>task</GroupName>
+          <Files>
+            <File>
+              <FileName>steering_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TASK\steering_task.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>usb</GroupName>
+          <Files>
+            <File>
+              <FileName>usbd_customhid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Class\CustomHID\Src\usbd_customhid.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\Src\usbd_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_ctlreq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\Src\usbd_ctlreq.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_ioreq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\STM32_USB_Device_Library\Core\Src\usbd_ioreq.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_device.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_DEVICE\usb_device.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_conf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_DEVICE\usbd_conf.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_custom_hid_if.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_DEVICE\usbd_custom_hid_if.c</FilePath>
+            </File>
+            <File>
+              <FileName>usbd_desc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\USB\USB_DEVICE\usbd_desc.c</FilePath>
             </File>
           </Files>
         </Group>
