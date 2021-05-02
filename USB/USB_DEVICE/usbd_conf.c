@@ -176,7 +176,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 	HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x40);
 	HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x40);
 	
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
 	return USBD_OK;
 }

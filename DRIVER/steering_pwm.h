@@ -3,9 +3,7 @@
 
 #include "stdint.h"
 
-//各个通道高电平时间，单位us
-extern uint16_t steering_pulse_ch[16];
-
+extern volatile uint16_t steering_pulse_ch[16];
 void steering_pwm_init(void);
 
 #endif

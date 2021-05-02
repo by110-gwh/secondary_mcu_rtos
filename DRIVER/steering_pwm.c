@@ -1,6 +1,7 @@
 #include "steering_pwm.h"
 #include "stm32f4xx_hal.h"
 #include "bitband.h"
+#include "steering_task.h"
 
 //通道IO输出高电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_H
@@ -40,10 +41,10 @@
 #define CH15_L PBout(6) = 0
 #define CH16_L PBout(7) = 0
 
+//各个通道高电平时间，单位us,范围0 - 4500
+volatile uint16_t steering_pulse_ch[16];
 //定时器2句柄
 static TIM_HandleTypeDef htim2;
-//各个通道高电平时间，单位us,范围0 - 4500
-uint16_t steering_pulse_ch[16];
 
 /**********************************************************************************************************
 *函 数 名: steering_gpio_init
@@ -214,6 +215,10 @@ void TIM2_IRQHandler(void)
 			next_ch = 0;
 		}
 			
+		__HAL_TIM_CLEAR_IT(&htim2, TIM_FLAG_CC1);
+		__HAL_TIM_CLEAR_IT(&htim2, TIM_FLAG_CC2);
+		__HAL_TIM_CLEAR_IT(&htim2, TIM_FLAG_CC3);
+		__HAL_TIM_CLEAR_IT(&htim2, TIM_FLAG_CC4);
 		__HAL_TIM_CLEAR_IT(&htim2, TIM_FLAG_UPDATE);
 	//定时器输出通道1比较中断
 	} else if (__HAL_TIM_GET_FLAG(&htim2, TIM_FLAG_CC1) != RESET) {

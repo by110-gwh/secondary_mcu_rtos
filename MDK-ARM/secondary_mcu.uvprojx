@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F401xC,HID_ENDPOINT</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\DRIVER;..\FREERTOS\include;..\FREERTOS\portable\RVDS\ARM_CM4F;..\STM32F4xx_HAL_Driver\Inc;..\SYSTEM;..\USB\hid;..\USB\STM32_USB_Device_Library\Class\CustomHID\Inc;..\USB\STM32_USB_Device_Library\Core\Inc;..\USB\USB_DEVICE;..\TASK</IncludePath>
+              <IncludePath>..\CMSIS;..\DRIVER;..\FREERTOS\include;..\FREERTOS\portable\RVDS\ARM_CM4F;..\STM32F4xx_HAL_Driver\Inc;..\SYSTEM;..\USB\hid;..\USB\STM32_USB_Device_Library\Class\CustomHID\Inc;..\USB\STM32_USB_Device_Library\Core\Inc;..\USB\USB_DEVICE;..\TASK;..\MODULE</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -360,7 +360,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -369,7 +369,7 @@
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>401\secondary_mcu_rtos.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -547,6 +547,16 @@
               <FileName>steering_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\TASK\steering_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>steering_action_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TASK\steering_action_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>steering_updata_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TASK\steering_updata_task.c</FilePath>
             </File>
           </Files>
         </Group>

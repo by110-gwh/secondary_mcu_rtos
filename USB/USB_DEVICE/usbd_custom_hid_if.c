@@ -2,6 +2,10 @@
 #include "usb_device.h"
 #include "steering_task.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+
 //数据发送缓冲区
 static uint8_t send_buf[64];
 
@@ -87,10 +91,15 @@ int8_t USBD_CUSTOM_HID_SendReport_FS(uint8_t *report, uint16_t len)
 **********************************************************************************************************/
 static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
 {	
-	USBD_CUSTOM_HID_ReceivePacket(&hUsbDeviceFS);
-	
+	BaseType_t xHigherPriorityTaskWoken;
+	xHigherPriorityTaskWoken = pdFALSE;
 	if (event_idx == 5 && state == 3) {
-		steering_control_data_in_callback(((uint8_t *)hUsbDeviceFS.pClassData) + 2, 64);
+		xQueueSendFromISR(rec_data_queue, ((uint8_t *)hUsbDeviceFS.pClassData) + 2, &xHigherPriorityTaskWoken);
+	} else {
+		USBD_CUSTOM_HID_ReceivePacket(&hUsbDeviceFS);
+	}
+	if(xHigherPriorityTaskWoken) {
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	
 	return (USBD_OK);
