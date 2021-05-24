@@ -31,7 +31,7 @@ volatile uint8_t steering_task_exit;
 //接收数据队列
 QueueHandle_t rec_data_queue;
 //动作组语句保存数组
-action_group_t action_group_save[8192] __attribute__((at(0x08020000)));
+action_group_t action_group_save[8192] __attribute__((at(0x08010000)));
 //各个通道舵机的速度，每20ms增加或减少2us
 volatile uint8_t steering_speed[16];
 //各个通道高电平时间，单位us,范围0 - 4500
@@ -53,7 +53,7 @@ void action_erase(void)
 	
 	//擦除动作保存区域，在第二扇区
 	pEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
-	pEraseInit.Sector = 4;
+	pEraseInit.Sector = 2;
 	pEraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
 	pEraseInit.NbSectors = 1;
 	HAL_FLASHEx_Erase(&pEraseInit, &PageError);
@@ -90,7 +90,7 @@ void action_download(void)
 				tmp.chanel = rec_cmd.chanel;
 				tmp.data = rec_cmd.data_h << 8 | rec_cmd.data_l;
 				//写入flash
-				HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, 0x08020000 + count * sizeof(action_group_t), *((uint32_t *)&tmp));
+				HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, 0x08010000 + count * sizeof(action_group_t), *((uint32_t *)&tmp));
 				count++;
 			} else if (rec_cmd.cmd == 0x0D){
 			} else {

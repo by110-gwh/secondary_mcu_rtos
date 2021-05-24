@@ -1,8 +1,10 @@
 #include "main.h"
-#include "steering_task.h"
+#include "main_task.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
+
+#include <stdio.h>
 
 //Æô¶¯ÈÎÎñ¾ä±ú
 xTaskHandle startTask;
@@ -17,11 +19,9 @@ void SystemClock_Config(void);
 **********************************************************************************************************/
 portTASK_FUNCTION(vStartTask, pvParameters)
 {
-	steering_task_create();
+	main_task_create();
 	
-	while (1) {
-		vTaskDelay(1000);
-	}
+	vTaskDelete(NULL);
 }
 
 /**********************************************************************************************************

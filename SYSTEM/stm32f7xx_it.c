@@ -120,4 +120,22 @@ void OTG_FS_IRQHandler(void)
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
 }
 
+/**
+  * @brief This function handles I2C1 event interrupt.
+  */
+void I2C1_EV_IRQHandler(void)
+{
+  extern I2C_HandleTypeDef hi2c1;
+  HAL_I2C_EV_IRQHandler(&hi2c1);
+}
+
+/**
+  * @brief This function handles I2C1 error interrupt.
+  */
+void I2C1_ER_IRQHandler(void)
+{
+  extern I2C_HandleTypeDef hi2c1;
+  HAL_I2C_ER_IRQHandler(&hi2c1);
+}
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
