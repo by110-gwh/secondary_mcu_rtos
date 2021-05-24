@@ -52,11 +52,10 @@ void action_erase(void)
 	HAL_FLASH_Unlock();
 	
 	//擦除动作保存区域，在第二扇区
-	pEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_4;
-	pEraseInit.Sector = 5;
+	pEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+	pEraseInit.Sector = 4;
 	pEraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
 	pEraseInit.NbSectors = 1;
-	pEraseInit.Banks = FLASH_BANK_1;
 	HAL_FLASHEx_Erase(&pEraseInit, &PageError);
 	//flash上锁
 	HAL_FLASH_Lock();

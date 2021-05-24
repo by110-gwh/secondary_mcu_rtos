@@ -1,45 +1,44 @@
 #include "steering_pwm.h"
-#include "stm32f4xx_hal.h"
-#include "bitband.h"
+#include "stm32f7xx_hal.h"
 #include "steering_task.h"
 
 //通道IO输出高电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_H
-#define CH1_H PAout(0) = 1
-#define CH2_H PAout(1) = 1
-#define CH3_H PAout(2) = 1
-#define CH4_H PAout(3) = 1
-#define CH5_H PAout(4) = 1
-#define CH6_H PAout(5) = 1
-#define CH7_H PAout(6) = 1
-#define CH8_H PAout(7) = 1
-#define CH9_H PBout(0) = 1
-#define CH10_H PBout(1) = 1
-#define CH11_H PBout(2) = 1
-#define CH12_H PBout(3) = 1
-#define CH13_H PBout(4) = 1
-#define CH14_H PBout(5) = 1
-#define CH15_H PBout(6) = 1
-#define CH16_H PBout(7) = 1
+#define CH1_H GPIOE->BSRR = 1U << 2
+#define CH2_H GPIOE->BSRR = 1U << 3
+#define CH3_H GPIOE->BSRR = 1U << 4
+#define CH4_H GPIOE->BSRR = 1U << 5
+#define CH5_H GPIOE->BSRR = 1U << 6
+#define CH6_H GPIOC->BSRR = 1U << 13
+#define CH7_H GPIOC->BSRR = 1U << 14
+#define CH8_H GPIOC->BSRR = 1U << 15
+#define CH9_H GPIOC->BSRR = 1U << 0
+#define CH10_H GPIOC->BSRR = 1U << 1
+#define CH11_H GPIOC->BSRR = 1U << 2
+#define CH12_H GPIOC->BSRR = 1U << 3
+#define CH13_H GPIOA->BSRR = 1U << 0
+#define CH14_H GPIOA->BSRR = 1U << 1
+#define CH15_H GPIOA->BSRR = 1U << 2
+#define CH16_H GPIOA->BSRR = 1U << 3
 
 //通道IO输出低电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_L
-#define CH1_L PAout(0) = 0
-#define CH2_L PAout(1) = 0
-#define CH3_L PAout(2) = 0
-#define CH4_L PAout(3) = 0
-#define CH5_L PAout(4) = 0
-#define CH6_L PAout(5) = 0
-#define CH7_L PAout(6) = 0
-#define CH8_L PAout(7) = 0
-#define CH9_L PBout(0) = 0
-#define CH10_L PBout(1) = 0
-#define CH11_L PBout(2) = 0
-#define CH12_L PBout(3) = 0
-#define CH13_L PBout(4) = 0
-#define CH14_L PBout(5) = 0
-#define CH15_L PBout(6) = 0
-#define CH16_L PBout(7) = 0
+#define CH1_L GPIOE->BSRR = 1U << (2 + 16)
+#define CH2_L GPIOE->BSRR = 1U << (3 + 16)
+#define CH3_L GPIOE->BSRR = 1U << (4 + 16)
+#define CH4_L GPIOE->BSRR = 1U << (5 + 16)
+#define CH5_L GPIOE->BSRR = 1U << (6 + 16)
+#define CH6_L GPIOC->BSRR = 1U << (13 + 16)
+#define CH7_L GPIOC->BSRR = 1U << (14 + 16)
+#define CH8_L GPIOC->BSRR = 1U << (15 + 16)
+#define CH9_L GPIOC->BSRR = 1U << (0 + 16)
+#define CH10_L GPIOC->BSRR = 1U << (1 + 16)
+#define CH11_L GPIOC->BSRR = 1U << (2 + 16)
+#define CH12_L GPIOC->BSRR = 1U << (3 + 16)
+#define CH13_L GPIOA->BSRR = 1U << (0 + 16)
+#define CH14_L GPIOA->BSRR = 1U << (1 + 16)
+#define CH15_L GPIOA->BSRR = 1U << (2 + 16)
+#define CH16_L GPIOA->BSRR = 1U << (3 + 16)
 
 //各个通道高电平时间，单位us,范围0 - 4500
 volatile uint16_t steering_pulse_ch[16];
@@ -58,22 +57,30 @@ static void steering_gpio_init(void)
 	
 	//使能GPIO时钟
 	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOE_CLK_ENABLE();
+    
 	//初始化IO引脚
-	HAL_GPIO_WritePin(GPIOA, 0xFF, GPIO_PIN_RESET);
-	GPIO_InitStruct.Pin = 0xFF;
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 	
-	HAL_GPIO_WritePin(GPIOB, 0xFF, GPIO_PIN_RESET);
-	GPIO_InitStruct.Pin = 0xFF;
+	HAL_GPIO_WritePin(GPIOC, 0xE00F, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = 0xE00F;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    
+	HAL_GPIO_WritePin(GPIOE, 0x7C, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = 0x7C;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 }
 
 /**********************************************************************************************************

@@ -1,32 +1,101 @@
-#ifndef _USBD_CONF__H
-#define _USBD_CONF__H
+/**
+  ******************************************************************************
+  * @file           : usbd_conf.h
+  * @version        : v1.0_Cube
+  * @brief          : Header for usbd_conf.c file.
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * All rights reserved.</center></h2>
+  *
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
+  *
+  ******************************************************************************
+  */
 
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __USBD_CONF__H__
+#define __USBD_CONF__H__
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+/* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "main.h"
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f7xx.h"
+#include "stm32f7xx_hal.h"
 
+/** @addtogroup USBD_OTG_DRIVER
+  * @{
+  */
+
+/** @defgroup USBD_CONF USBD_CONF
+  * @brief Configuration file for Usb otg low level driver.
+  * @{
+  */
+
+/** @defgroup USBD_CONF_Exported_Variables USBD_CONF_Exported_Variables
+  * @brief Public variables.
+  * @{
+  */
+
+/**
+  * @}
+  */
+
+/** @defgroup USBD_CONF_Exported_Defines USBD_CONF_Exported_Defines
+  * @brief Defines for configuration of the Usb device.
+  * @{
+  */
+
+/*---------- -----------*/
 #define USBD_MAX_NUM_INTERFACES     1U
+/*---------- -----------*/
 #define USBD_MAX_NUM_CONFIGURATION     1U
+/*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
+/*---------- -----------*/
 #define USBD_DEBUG_LEVEL     0U
-#define USBD_LPM_ENABLED     0U
+/*---------- -----------*/
+#define USBD_LPM_ENABLED     1U
+/*---------- -----------*/
 #define USBD_SELF_POWERED     1U
+/*---------- -----------*/
 #define USBD_CUSTOMHID_OUTREPORT_BUF_SIZE     64U
+/*---------- -----------*/
 #define USBD_CUSTOM_HID_REPORT_DESC_SIZE     0x21
-#define CUSTOM_HID_FS_BINTERVAL     0x2U
+/*---------- -----------*/
+#define CUSTOM_HID_FS_BINTERVAL     0x5U
 
+/****************************************/
+/* #define for FS and HS identification */
 #define DEVICE_FS 		0
 #define DEVICE_HS 		1
 
-/* Memory management macros make sure to use static memory allocation */
+/**
+  * @}
+  */
+
+/** @defgroup USBD_CONF_Exported_Macros USBD_CONF_Exported_Macros
+  * @brief Aliases.
+  * @{
+  */
+
+/* Memory management macros */
+
 /** Alias for memory allocation. */
-#define USBD_malloc         (void *)USBD_static_malloc
+#define USBD_malloc         malloc
 
 /** Alias for memory release. */
-#define USBD_free           USBD_static_free
+#define USBD_free           free
 
 /** Alias for memory set. */
 #define USBD_memset         memset
@@ -38,6 +107,7 @@
 #define USBD_Delay          HAL_Delay
 
 /* DEBUG macros */
+
 #if (USBD_DEBUG_LEVEL > 0)
 #define USBD_UsrLog(...)    printf(__VA_ARGS__);\
                             printf("\n");
@@ -62,8 +132,42 @@
 #define USBD_DbgLog(...)
 #endif
 
-/* Exported functions -------------------------------------------------------*/
-void *USBD_static_malloc(uint32_t size);
-void USBD_static_free(void *p);
+/**
+  * @}
+  */
 
+/** @defgroup USBD_CONF_Exported_Types USBD_CONF_Exported_Types
+  * @brief Types.
+  * @{
+  */
+
+/**
+  * @}
+  */
+
+/** @defgroup USBD_CONF_Exported_FunctionsPrototype USBD_CONF_Exported_FunctionsPrototype
+  * @brief Declaration of public functions for Usb device.
+  * @{
+  */
+
+/* Exported functions -------------------------------------------------------*/
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* __USBD_CONF__H__ */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

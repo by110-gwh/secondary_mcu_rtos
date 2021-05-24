@@ -1,2 +1,3 @@
-# secondary_mcu_rtos
-GDUT robot team control board secondary MCU with RTOS
+# robot cotroller
+# 小柴
+GDUT robot team control board MCU program template with RTOS

@@ -41,17 +41,11 @@ extern "C" {
 /** @defgroup USBD_CUSTOM_HID_Exported_Defines
   * @{
   */
-#define CUSTOM_HID_EPIN_ADDR                         0x82U
-
-#ifndef CUSTOM_HID_EPIN_SIZE
-#define CUSTOM_HID_EPIN_SIZE                         0x40U
-#endif
+#define CUSTOM_HID_EPIN_ADDR                         0x81U
+#define CUSTOM_HID_EPIN_SIZE                         64U
 
 #define CUSTOM_HID_EPOUT_ADDR                        0x01U
-
-#ifndef CUSTOM_HID_EPOUT_SIZE
-#define CUSTOM_HID_EPOUT_SIZE                        0x40U
-#endif
+#define CUSTOM_HID_EPOUT_SIZE                        64U
 
 #define USB_CUSTOM_HID_CONFIG_DESC_SIZ               41U
 #define USB_CUSTOM_HID_DESC_SIZ                      9U

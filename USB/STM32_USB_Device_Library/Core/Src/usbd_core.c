@@ -21,71 +21,71 @@
 #include "usbd_core.h"
 
 /** @addtogroup STM32_USBD_DEVICE_LIBRARY
-  * @{
-  */
+* @{
+*/
 
 
 /** @defgroup USBD_CORE
-  * @brief usbd core module
-  * @{
-  */
+* @brief usbd core module
+* @{
+*/
 
 /** @defgroup USBD_CORE_Private_TypesDefinitions
-  * @{
-  */
+* @{
+*/
 
 /**
-  * @}
-  */
+* @}
+*/
 
 
 /** @defgroup USBD_CORE_Private_Defines
-  * @{
-  */
+* @{
+*/
 
 /**
-  * @}
-  */
+* @}
+*/
 
 
 /** @defgroup USBD_CORE_Private_Macros
-  * @{
-  */
+* @{
+*/
 
 /**
-  * @}
-  */
+* @}
+*/
 
 
 /** @defgroup USBD_CORE_Private_FunctionPrototypes
-  * @{
-  */
+* @{
+*/
 
 /**
-  * @}
-  */
+* @}
+*/
 
 /** @defgroup USBD_CORE_Private_Variables
-  * @{
-  */
+* @{
+*/
 
 /**
-  * @}
-  */
+* @}
+*/
 
 
 /** @defgroup USBD_CORE_Private_Functions
-  * @{
-  */
+* @{
+*/
 
 /**
-  * @brief  USBD_Init
-  *         Initializes the device stack and load the class driver
-  * @param  pdev: device instance
-  * @param  pdesc: Descriptor structure address
-  * @param  id: Low level core index
-  * @retval None
-  */
+* @brief  USBD_Init
+*         Initializes the device stack and load the class driver
+* @param  pdev: device instance
+* @param  pdesc: Descriptor structure address
+* @param  id: Low level core index
+* @retval None
+*/
 USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev,
                              USBD_DescriptorsTypeDef *pdesc, uint8_t id)
 {
@@ -100,10 +100,16 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev,
     return USBD_FAIL;
   }
 
-  /* Unlink previous class resources */
-  pdev->pClass = NULL;
-  pdev->pUserData = NULL;
-  pdev->pConfDesc = NULL;
+  /* Unlink previous class */
+  if (pdev->pClass != NULL)
+  {
+    pdev->pClass = NULL;
+  }
+
+  if (pdev->pConfDesc != NULL)
+  {
+    pdev->pConfDesc = NULL;
+  }
 
   /* Assign USBD Descriptors */
   if (pdesc != NULL)
@@ -122,17 +128,14 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev,
 }
 
 /**
-  * @brief  USBD_DeInit
-  *         Re-Initialize the device library
-  * @param  pdev: device instance
-  * @retval status: status
-  */
+* @brief  USBD_DeInit
+*         Re-Initialize th device library
+* @param  pdev: device instance
+* @retval status: status
+*/
 USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef *pdev)
 {
   USBD_StatusTypeDef ret;
-
-  /* Disconnect the USB Device */
-  (void)USBD_LL_Stop(pdev);
 
   /* Set Default State */
   pdev->dev_state = USBD_STATE_DEFAULT;
@@ -141,15 +144,22 @@ USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef *pdev)
   if (pdev->pClass != NULL)
   {
     pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
-    pdev->pClass = NULL;
-    pdev->pUserData = NULL;
   }
 
-  /* Free Device descriptors resources */
-  pdev->pDesc = NULL;
-  pdev->pConfDesc = NULL;
+  if (pdev->pConfDesc != NULL)
+  {
+    pdev->pConfDesc = NULL;
+  }
 
-  /* DeInitialize low level driver */
+  /* Stop the low level driver  */
+  ret = USBD_LL_Stop(pdev);
+
+  if (ret != USBD_OK)
+  {
+    return ret;
+  }
+
+  /* Initialize low level driver */
   ret = USBD_LL_DeInit(pdev);
 
   return ret;
@@ -178,17 +188,12 @@ USBD_StatusTypeDef USBD_RegisterClass(USBD_HandleTypeDef *pdev, USBD_ClassTypeDe
   pdev->pClass = pclass;
 
   /* Get Device Configuration Descriptor */
-#ifdef USE_USB_HS
-  if (pdev->pClass->GetHSConfigDescriptor != NULL)
-  {
-    pdev->pConfDesc = (void *)pdev->pClass->GetHSConfigDescriptor(&len);
-  }
-#else /* Default USE_USB_FS */
-  if (pdev->pClass->GetFSConfigDescriptor != NULL)
-  {
-    pdev->pConfDesc = (void *)pdev->pClass->GetFSConfigDescriptor(&len);
-  }
+#ifdef USE_USB_FS
+  pdev->pConfDesc = (void *)pdev->pClass->GetFSConfigDescriptor(&len);
+#else /* USE_USB_HS */
+  pdev->pConfDesc = (void *)pdev->pClass->GetHSConfigDescriptor(&len);
 #endif /* USE_USB_FS */
+
 
   return USBD_OK;
 }
@@ -213,24 +218,31 @@ USBD_StatusTypeDef USBD_Start(USBD_HandleTypeDef *pdev)
   */
 USBD_StatusTypeDef USBD_Stop(USBD_HandleTypeDef *pdev)
 {
-  /* Disconnect USB Device */
-  (void)USBD_LL_Stop(pdev);
+  USBD_StatusTypeDef ret;
 
   /* Free Class Resources */
   if (pdev->pClass != NULL)
   {
-    (void)pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
-  return USBD_OK;
+  if (pdev->pConfDesc != NULL)
+  {
+    pdev->pConfDesc = NULL;
+  }
+
+  /* Stop the low level driver */
+  ret = USBD_LL_Stop(pdev);
+
+  return ret;
 }
 
 /**
-  * @brief  USBD_RunTestMode
-  *         Launch test mode process
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_RunTestMode
+*         Launch test mode process
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_RunTestMode(USBD_HandleTypeDef  *pdev)
 {
   /* Prevent unused argument compilation warning */
@@ -240,12 +252,12 @@ USBD_StatusTypeDef USBD_RunTestMode(USBD_HandleTypeDef  *pdev)
 }
 
 /**
-  * @brief  USBD_SetClassConfig
-  *        Configure device and start the interface
-  * @param  pdev: device instance
-  * @param  cfgidx: configuration index
-  * @retval status
-  */
+* @brief  USBD_SetClassConfig
+*        Configure device and start the interface
+* @param  pdev: device instance
+* @param  cfgidx: configuration index
+* @retval status
+*/
 
 USBD_StatusTypeDef USBD_SetClassConfig(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
@@ -261,12 +273,12 @@ USBD_StatusTypeDef USBD_SetClassConfig(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 }
 
 /**
-  * @brief  USBD_ClrClassConfig
-  *         Clear current configuration
-  * @param  pdev: device instance
-  * @param  cfgidx: configuration index
-  * @retval status: USBD_StatusTypeDef
-  */
+* @brief  USBD_ClrClassConfig
+*         Clear current configuration
+* @param  pdev: device instance
+* @param  cfgidx: configuration index
+* @retval status: USBD_StatusTypeDef
+*/
 USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   /* Clear configuration and De-initialize the Class process */
@@ -280,11 +292,11 @@ USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
 
 /**
-  * @brief  USBD_LL_SetupStage
-  *         Handle the setup stage
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_SetupStage
+*         Handle the setup stage
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_SetupStage(USBD_HandleTypeDef *pdev, uint8_t *psetup)
 {
   USBD_StatusTypeDef ret;
@@ -318,13 +330,12 @@ USBD_StatusTypeDef USBD_LL_SetupStage(USBD_HandleTypeDef *pdev, uint8_t *psetup)
 }
 
 /**
-  * @brief  USBD_LL_DataOutStage
-  *         Handle data OUT stage
-  * @param  pdev: device instance
-  * @param  epnum: endpoint index
-  * @param  pdata: data pointer
-  * @retval status
-  */
+* @brief  USBD_DataOutStage
+*         Handle data OUT stage
+* @param  pdev: device instance
+* @param  epnum: endpoint index
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef *pdev,
                                         uint8_t epnum, uint8_t *pdata)
 {
@@ -345,14 +356,11 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef *pdev,
       }
       else
       {
-        if (pdev->dev_state == USBD_STATE_CONFIGURED)
+        if ((pdev->pClass->EP0_RxReady != NULL) &&
+            (pdev->dev_state == USBD_STATE_CONFIGURED))
         {
-          if (pdev->pClass->EP0_RxReady != NULL)
-          {
-            pdev->pClass->EP0_RxReady(pdev);
-          }
+          pdev->pClass->EP0_RxReady(pdev);
         }
-
         (void)USBD_CtlSendStatus(pdev);
       }
     }
@@ -362,40 +370,40 @@ USBD_StatusTypeDef USBD_LL_DataOutStage(USBD_HandleTypeDef *pdev,
       if (pdev->ep0_state == USBD_EP0_STATUS_OUT)
       {
         /*
-          * STATUS PHASE completed, update ep0_state to idle
-          */
+         * STATUS PHASE completed, update ep0_state to idle
+         */
         pdev->ep0_state = USBD_EP0_IDLE;
         (void)USBD_LL_StallEP(pdev, 0U);
       }
 #endif
     }
   }
+  else if ((pdev->pClass->DataOut != NULL) &&
+           (pdev->dev_state == USBD_STATE_CONFIGURED))
+  {
+    ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
+
+    if (ret != USBD_OK)
+    {
+      return ret;
+    }
+  }
   else
   {
-    if (pdev->dev_state == USBD_STATE_CONFIGURED)
-    {
-      if (pdev->pClass->DataOut != NULL)
-      {
-        ret = (USBD_StatusTypeDef)pdev->pClass->DataOut(pdev, epnum);
-
-        if (ret != USBD_OK)
-        {
-          return ret;
-        }
-      }
-    }
+    /* should never be in this condition */
+    return USBD_FAIL;
   }
 
   return USBD_OK;
 }
 
 /**
-  * @brief  USBD_LL_DataInStage
-  *         Handle data in stage
-  * @param  pdev: device instance
-  * @param  epnum: endpoint index
-  * @retval status
-  */
+* @brief  USBD_DataInStage
+*         Handle data in stage
+* @param  pdev: device instance
+* @param  epnum: endpoint index
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev,
                                        uint8_t epnum, uint8_t *pdata)
 {
@@ -415,7 +423,7 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev,
         (void)USBD_CtlContinueSendData(pdev, pdata, pep->rem_length);
 
         /* Prepare endpoint for premature end of transfer */
-        (void)USBD_LL_PrepareReceive(pdev, 0U, NULL, 0U);
+       (void)USBD_LL_PrepareReceive(pdev, 0U, NULL, 0U);
       }
       else
       {
@@ -432,12 +440,10 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev,
         }
         else
         {
-          if (pdev->dev_state == USBD_STATE_CONFIGURED)
+          if ((pdev->pClass->EP0_TxSent != NULL) &&
+              (pdev->dev_state == USBD_STATE_CONFIGURED))
           {
-            if (pdev->pClass->EP0_TxSent != NULL)
-            {
-              pdev->pClass->EP0_TxSent(pdev);
-            }
+            pdev->pClass->EP0_TxSent(pdev);
           }
           (void)USBD_LL_StallEP(pdev, 0x80U);
           (void)USBD_CtlReceiveStatus(pdev);
@@ -461,31 +467,31 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev,
       pdev->dev_test_mode = 0U;
     }
   }
+  else if ((pdev->pClass->DataIn != NULL) &&
+           (pdev->dev_state == USBD_STATE_CONFIGURED))
+  {
+    ret = (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev, epnum);
+
+    if (ret != USBD_OK)
+    {
+      return ret;
+    }
+  }
   else
   {
-    if (pdev->dev_state == USBD_STATE_CONFIGURED)
-    {
-      if (pdev->pClass->DataIn != NULL)
-      {
-        ret = (USBD_StatusTypeDef)pdev->pClass->DataIn(pdev, epnum);
-
-        if (ret != USBD_OK)
-        {
-          return ret;
-        }
-      }
-    }
+    /* should never be in this condition */
+    return USBD_FAIL;
   }
 
   return USBD_OK;
 }
 
 /**
-  * @brief  USBD_LL_Reset
-  *         Handle Reset event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_LL_Reset
+*         Handle Reset event
+* @param  pdev: device instance
+* @retval status
+*/
 
 USBD_StatusTypeDef USBD_LL_Reset(USBD_HandleTypeDef *pdev)
 {
@@ -495,20 +501,12 @@ USBD_StatusTypeDef USBD_LL_Reset(USBD_HandleTypeDef *pdev)
   pdev->dev_config = 0U;
   pdev->dev_remote_wakeup = 0U;
 
-  if (pdev->pClass == NULL)
-  {
-    return USBD_FAIL;
-  }
-
   if (pdev->pClassData != NULL)
   {
-    if (pdev->pClass->DeInit != NULL)
-    {
-      (void)pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
-    }
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
-  /* Open EP0 OUT */
+    /* Open EP0 OUT */
   (void)USBD_LL_OpenEP(pdev, 0x00U, USBD_EP_TYPE_CTRL, USB_MAX_EP0_SIZE);
   pdev->ep_out[0x00U & 0xFU].is_used = 1U;
 
@@ -524,11 +522,11 @@ USBD_StatusTypeDef USBD_LL_Reset(USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  USBD_LL_SetSpeed
-  *         Handle Reset event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_LL_Reset
+*         Handle Reset event
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_SetSpeed(USBD_HandleTypeDef *pdev,
                                     USBD_SpeedTypeDef speed)
 {
@@ -538,11 +536,11 @@ USBD_StatusTypeDef USBD_LL_SetSpeed(USBD_HandleTypeDef *pdev,
 }
 
 /**
-  * @brief  USBD_LL_Suspend
-  *         Handle Suspend event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_Suspend
+*         Handle Suspend event
+* @param  pdev: device instance
+* @retval status
+*/
 
 USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef *pdev)
 {
@@ -553,11 +551,11 @@ USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  USBD_LL_Resume
-  *         Handle Resume event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_Resume
+*         Handle Resume event
+* @param  pdev: device instance
+* @retval status
+*/
 
 USBD_StatusTypeDef USBD_LL_Resume(USBD_HandleTypeDef *pdev)
 {
@@ -570,24 +568,19 @@ USBD_StatusTypeDef USBD_LL_Resume(USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  USBD_LL_SOF
-  *         Handle SOF event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_SOF
+*         Handle SOF event
+* @param  pdev: device instance
+* @retval status
+*/
 
 USBD_StatusTypeDef USBD_LL_SOF(USBD_HandleTypeDef *pdev)
 {
-  if (pdev->pClass == NULL)
-  {
-    return USBD_FAIL;
-  }
-
   if (pdev->dev_state == USBD_STATE_CONFIGURED)
   {
     if (pdev->pClass->SOF != NULL)
     {
-      (void)pdev->pClass->SOF(pdev);
+      pdev->pClass->SOF(pdev);
     }
   }
 
@@ -595,61 +588,43 @@ USBD_StatusTypeDef USBD_LL_SOF(USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  USBD_LL_IsoINIncomplete
-  *         Handle iso in incomplete event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_IsoINIncomplete
+*         Handle iso in incomplete event
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_IsoINIncomplete(USBD_HandleTypeDef *pdev,
                                            uint8_t epnum)
 {
-  if (pdev->pClass == NULL)
-  {
-    return USBD_FAIL;
-  }
-
-  if (pdev->dev_state == USBD_STATE_CONFIGURED)
-  {
-    if (pdev->pClass->IsoINIncomplete != NULL)
-    {
-      (void)pdev->pClass->IsoINIncomplete(pdev, epnum);
-    }
-  }
+  /* Prevent unused arguments compilation warning */
+  UNUSED(pdev);
+  UNUSED(epnum);
 
   return USBD_OK;
 }
 
 /**
-  * @brief  USBD_LL_IsoOUTIncomplete
-  *         Handle iso out incomplete event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_IsoOUTIncomplete
+*         Handle iso out incomplete event
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_IsoOUTIncomplete(USBD_HandleTypeDef *pdev,
                                             uint8_t epnum)
 {
-  if (pdev->pClass == NULL)
-  {
-    return USBD_FAIL;
-  }
-
-  if (pdev->dev_state == USBD_STATE_CONFIGURED)
-  {
-    if (pdev->pClass->IsoOUTIncomplete != NULL)
-    {
-      (void)pdev->pClass->IsoOUTIncomplete(pdev, epnum);
-    }
-  }
+  /* Prevent unused arguments compilation warning */
+  UNUSED(pdev);
+  UNUSED(epnum);
 
   return USBD_OK;
 }
 
 /**
-  * @brief  USBD_LL_DevConnected
-  *         Handle device connection event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_DevConnected
+*         Handle device connection event
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_DevConnected(USBD_HandleTypeDef *pdev)
 {
   /* Prevent unused argument compilation warning */
@@ -659,11 +634,11 @@ USBD_StatusTypeDef USBD_LL_DevConnected(USBD_HandleTypeDef *pdev)
 }
 
 /**
-  * @brief  USBD_LL_DevDisconnected
-  *         Handle device disconnection event
-  * @param  pdev: device instance
-  * @retval status
-  */
+* @brief  USBD_DevDisconnected
+*         Handle device disconnection event
+* @param  pdev: device instance
+* @retval status
+*/
 USBD_StatusTypeDef USBD_LL_DevDisconnected(USBD_HandleTypeDef *pdev)
 {
   /* Free Class Resources */
@@ -671,24 +646,24 @@ USBD_StatusTypeDef USBD_LL_DevDisconnected(USBD_HandleTypeDef *pdev)
 
   if (pdev->pClass != NULL)
   {
-    (void)pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
   }
 
   return USBD_OK;
 }
 /**
-  * @}
-  */
+* @}
+*/
 
 
 /**
-  * @}
-  */
+* @}
+*/
 
 
 /**
-  * @}
-  */
+* @}
+*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

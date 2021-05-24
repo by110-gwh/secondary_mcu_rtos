@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /*
  * FreeRTOS Kernel V10.2.1
  * Portion Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -26,7 +25,6 @@
  *
  * 1 tab == 4 spaces!
  */
-/* USER CODE END Header */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
@@ -52,7 +50,7 @@
   #include <stdint.h>
   extern uint32_t SystemCoreClock;
 #endif
-#define configENABLE_FPU                         1
+#define configENABLE_FPU                         0
 #define configENABLE_MPU                         0
 
 #define configUSE_PREEMPTION                     1
@@ -73,11 +71,10 @@
 #define configUSE_RECURSIVE_MUTEXES              1
 #define configUSE_COUNTING_SEMAPHORES            1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  0
-/* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
+
 /* Defaults to size_t for backward compatibility, but can be changed
    if lengths will always be less than the number of bytes in a size_t. */
 #define configMESSAGE_BUFFER_LENGTH_TYPE         size_t
-/* USER CODE END MESSAGE_BUFFER_LENGTH_TYPE */
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -151,8 +148,6 @@ standard names. */
 
 #define xPortSysTickHandler SysTick_Handler
 
-/* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-/* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
