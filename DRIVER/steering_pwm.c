@@ -4,7 +4,7 @@
 
 //通道IO输出高电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_H
-#define CH1_H GPIOE->BSRR = 1U << 2
+#define CH1_H GPIOE->BSRR = 1U << 1
 #define CH2_H GPIOE->BSRR = 1U << 3
 #define CH3_H GPIOE->BSRR = 1U << 4
 #define CH4_H GPIOE->BSRR = 1U << 5
@@ -23,7 +23,7 @@
 
 //通道IO输出低电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_L
-#define CH1_L GPIOE->BSRR = 1U << (2 + 16)
+#define CH1_L GPIOE->BSRR = 1U << (1 + 16)
 #define CH2_L GPIOE->BSRR = 1U << (3 + 16)
 #define CH3_L GPIOE->BSRR = 1U << (4 + 16)
 #define CH4_L GPIOE->BSRR = 1U << (5 + 16)
@@ -75,8 +75,8 @@ static void steering_gpio_init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
     
-	HAL_GPIO_WritePin(GPIOE, 0x7C, GPIO_PIN_RESET);
-	GPIO_InitStruct.Pin = 0x7C;
+	HAL_GPIO_WritePin(GPIOE, 0x7A, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = 0x7A;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

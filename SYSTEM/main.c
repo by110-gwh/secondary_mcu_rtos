@@ -1,5 +1,6 @@
 #include "main.h"
 #include "main_task.h"
+#include "qspi.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -32,11 +33,18 @@ portTASK_FUNCTION(vStartTask, pvParameters)
 **********************************************************************************************************/
 int main(void)
 {
+    //使能I-Cache
+    SCB_EnableICache();
+    //使能D-Cache
+    SCB_EnableDCache();
 	//初始化HAL库
 	HAL_Init();
 	//时钟系统配置72M
 	SystemClock_Config();
 	
+    //映射QSPI到内存地址上
+    qspi_init();
+    
 	//创建启动任务
 	xTaskCreate(vStartTask, "startTask", 128, NULL, 0, &startTask);
 	//OS调度器启动
