@@ -102,7 +102,7 @@ void steering_pwm_init(void)
 	
 	//定时器2计数器初始化
 	htim2.Instance = TIM2;
-	htim2.Init.Prescaler = 84 - 1;
+	htim2.Init.Prescaler = 108 - 1;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim2.Init.Period = 5000 - 1;
 	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;

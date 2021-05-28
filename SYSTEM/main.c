@@ -20,8 +20,7 @@ void SystemClock_Config(void);
 **********************************************************************************************************/
 portTASK_FUNCTION(vStartTask, pvParameters)
 {
-	main_task_create();
-	
+    main_task_create();
 	vTaskDelete(NULL);
 }
 
@@ -36,15 +35,14 @@ int main(void)
     //使能I-Cache
     SCB_EnableICache();
     //使能D-Cache
-    SCB_EnableDCache();
+    //SCB_EnableDCache();
 	//初始化HAL库
 	HAL_Init();
 	//时钟系统配置72M
 	SystemClock_Config();
-	
     //映射QSPI到内存地址上
-    qspi_init();
-    
+    //qspi_init();
+	
 	//创建启动任务
 	xTaskCreate(vStartTask, "startTask", 128, NULL, 0, &startTask);
 	//OS调度器启动
@@ -87,8 +85,8 @@ void SystemClock_Config(void)
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = 4;
-    RCC_OscInitStruct.PLL.PLLN = 216;
+    RCC_OscInitStruct.PLL.PLLM = 8;
+    RCC_OscInitStruct.PLL.PLLN = 432;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
     RCC_OscInitStruct.PLL.PLLQ = 9;
     while (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK);
