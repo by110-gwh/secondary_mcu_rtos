@@ -122,9 +122,9 @@
                is no need to call the 2 first functions listed above, since SystemCoreClock
                variable is updated automatically.
   */
-  uint32_t SystemCoreClock = 16000000;
-  const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-  const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
+//  uint32_t SystemCoreClock = 16000000;
+//  const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+//  const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
 /**
   * @}
@@ -151,6 +151,9 @@
   */
 void SystemInit(void)
 {
+  uint32_t SystemCoreClock = 16000000;
+  const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+  const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
   /* FPU settings ------------------------------------------------------------*/
 #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
   SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
