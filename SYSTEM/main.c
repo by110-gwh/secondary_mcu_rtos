@@ -13,10 +13,6 @@ xTaskHandle startTask;
 
 void SystemClock_Config(void);
 
-uint32_t SystemCoreClock = 16000000;
-const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
-
 /**********************************************************************************************************
 *函 数 名: vStartTask
 *功能说明: 系统启动任务，调用各类初始化函数，并创建消息队列和要运行的用户任务
@@ -45,6 +41,78 @@ void move_vector_to_ram()
 }
 
 /**********************************************************************************************************
+*函 数 名: mpu_config
+*功能说明: 内存保护单元设置
+*形    参: 无
+*返 回 值: 无
+**********************************************************************************************************/
+void MPU_Config(void)
+{
+    MPU_Region_InitTypeDef MPU_InitStruct = {0};
+
+    //关闭MPU
+    HAL_MPU_Disable();
+
+    //QSPI内存使能cache，禁止写
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+    MPU_InitStruct.BaseAddress = 0x90000000;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_256MB;
+    MPU_InitStruct.SubRegionDisable = 0x0;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+    MPU_InitStruct.AccessPermission = MPU_REGION_PRIV_RO_URO;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+    //单片机片内内存使能cache
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+    MPU_InitStruct.BaseAddress = 0x20000000;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_256MB;
+    MPU_InitStruct.SubRegionDisable = 0x0;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+    //单片机外设寄存器，禁止cache
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+    MPU_InitStruct.BaseAddress = 0x40000000;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_1GB;
+    MPU_InitStruct.SubRegionDisable = 0x0;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+    //单片机片内flash，使能cache
+    MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+    MPU_InitStruct.Number = MPU_REGION_NUMBER3;
+    MPU_InitStruct.BaseAddress = 0x00000000;
+    MPU_InitStruct.Size = MPU_REGION_SIZE_1GB;
+    MPU_InitStruct.SubRegionDisable = 0x0;
+    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+    MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+    HAL_MPU_ConfigRegion(&MPU_InitStruct);
+    
+    //使能MPU
+    HAL_MPU_Enable(MPU_HARDFAULT_NMI);
+}
+/**********************************************************************************************************
 *函 数 名: main
 *功能说明: 系统程序入口
 *形    参: 无
@@ -52,8 +120,10 @@ void move_vector_to_ram()
 **********************************************************************************************************/
 int main(void)
 {
+    //MPU配置
+    MPU_Config();
     //将中断向量表移至内存中
-    move_vector_to_ram();
+    //move_vector_to_ram();
     //使能I-Cache
     SCB_EnableICache();
     //使能D-Cache
@@ -123,7 +193,9 @@ void SystemClock_Config(void)
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
     HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
     
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_CLK48;
+    PeriphClkInitStruct.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+    PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
     PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
     while (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK);
 }
