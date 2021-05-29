@@ -30,14 +30,22 @@ portTASK_FUNCTION(ahrs_task, pvParameters)
 	
 	imu_init();
 	ahrs_init();
-    gyro_calibration();
     //唤醒调度器
     //xTaskResumeAll();
 
-
     xLastWakeTime = xTaskGetTickCount();
-    while (!ahrs_task_exit)
-    {
+
+    while (!ahrs_task_exit && (tempDataFilter > 51 || tempDataFilter < 49)) {
+		//获取imu数据
+		get_imu_data();
+        //睡眠5ms
+        vTaskDelayUntil(&xLastWakeTime, (5 / portTICK_RATE_MS));
+    }
+    
+    gyro_calibration();
+    xLastWakeTime = xTaskGetTickCount();
+    
+    while (!ahrs_task_exit) {
         
 		//获取imu数据
 		get_imu_data();

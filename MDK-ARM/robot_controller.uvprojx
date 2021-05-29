@@ -475,6 +475,11 @@
               <FileType>1</FileType>
               <FilePath>..\MATH\Filter.c</FilePath>
             </File>
+            <File>
+              <FileName>pid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MATH\pid.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -659,6 +664,11 @@
               <FileName>ahrs_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\TASK\ahrs_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>imu_temp_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TASK\imu_temp_task.c</FilePath>
             </File>
           </Files>
         </Group>

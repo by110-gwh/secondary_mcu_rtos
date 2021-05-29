@@ -97,9 +97,9 @@ void get_imu_data()
 	gyroRawData.z = gyroRawData.z - paramer_save_data.gyro_z_offset;
 	
 	//陀螺仪数据带阻滤波
-	gyroDataFilter.x = Butterworth_Filter(gyroRawData.x, &Gyro_BufferData_BPF[0], &Bandstop_Filter_Parameter_30_98);
-	gyroDataFilter.y = Butterworth_Filter(gyroRawData.y, &Gyro_BufferData_BPF[1], &Bandstop_Filter_Parameter_30_98);
-	gyroDataFilter.z = Butterworth_Filter(gyroRawData.z, &Gyro_BufferData_BPF[2], &Bandstop_Filter_Parameter_30_98);
+//	gyroRawData.x = Butterworth_Filter(gyroRawData.x, &Gyro_BufferData_BPF[0], &Bandstop_Filter_Parameter_30_98);
+//	gyroRawData.y = Butterworth_Filter(gyroRawData.y, &Gyro_BufferData_BPF[1], &Bandstop_Filter_Parameter_30_98);
+//	gyroRawData.z = Butterworth_Filter(gyroRawData.z, &Gyro_BufferData_BPF[2], &Bandstop_Filter_Parameter_30_98);
 	
 	gyroRawData.x = Butterworth_Filter(gyroRawData.x, &Gyro_BufferData[0], &Gyro_Parameter);
 	gyroRawData.y = Butterworth_Filter(gyroRawData.y, &Gyro_BufferData[1], &Gyro_Parameter);
@@ -110,15 +110,19 @@ void get_imu_data()
 	gyroDataFilter.z = gyroRawData.z;
 	
 	//加速计矫正数据带阻滤波
-	acceCorrectFilter.x = Butterworth_Filter(accRawData.x, &Butter_Buffer_Correct[0], &Acce_Correct_Parameter);
-	acceCorrectFilter.y = Butterworth_Filter(accRawData.y, &Butter_Buffer_Correct[1], &Acce_Correct_Parameter);
-	acceCorrectFilter.z = Butterworth_Filter(accRawData.z, &Butter_Buffer_Correct[2], &Acce_Correct_Parameter);
+//	acceCorrectFilter.x = Butterworth_Filter(accRawData.x, &Butter_Buffer_Correct[0], &Acce_Correct_Parameter);
+//	acceCorrectFilter.y = Butterworth_Filter(accRawData.y, &Butter_Buffer_Correct[1], &Acce_Correct_Parameter);
+//	acceCorrectFilter.z = Butterworth_Filter(accRawData.z, &Butter_Buffer_Correct[2], &Acce_Correct_Parameter);
 	
+    acceCorrectFilter.x = accRawData.x;
+    acceCorrectFilter.y = accRawData.y;
+    acceCorrectFilter.z = accRawData.z;
+    
 	//加速计数据带阻滤波
-	accRawData.x = Butterworth_Filter(accRawData.x, &Accel_BufferData_BPF[0], &Bandstop_Filter_Parameter_30_94);
-	accRawData.y = Butterworth_Filter(accRawData.y, &Accel_BufferData_BPF[1], &Bandstop_Filter_Parameter_30_94);
-	accRawData.z = Butterworth_Filter(accRawData.z, &Accel_BufferData_BPF[2], &Bandstop_Filter_Parameter_30_94);
-	
+//	accRawData.x = Butterworth_Filter(accRawData.x, &Accel_BufferData_BPF[0], &Bandstop_Filter_Parameter_30_94);
+//	accRawData.y = Butterworth_Filter(accRawData.y, &Accel_BufferData_BPF[1], &Bandstop_Filter_Parameter_30_94);
+//	accRawData.z = Butterworth_Filter(accRawData.z, &Accel_BufferData_BPF[2], &Bandstop_Filter_Parameter_30_94);
+
 	accRawData.x = Butterworth_Filter(accRawData.x, &Accel_BufferData[0], &Accel_Parameter);
 	accRawData.y = Butterworth_Filter(accRawData.y, &Accel_BufferData[1], &Accel_Parameter);
 	accRawData.z = Butterworth_Filter(accRawData.z, &Accel_BufferData[2], &Accel_Parameter);

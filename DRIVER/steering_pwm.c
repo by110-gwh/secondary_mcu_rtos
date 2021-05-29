@@ -12,7 +12,7 @@
 #define CH6_H GPIOC->BSRR = 1U << 13
 #define CH7_H GPIOC->BSRR = 1U << 14
 #define CH8_H GPIOC->BSRR = 1U << 15
-#define CH9_H GPIOC->BSRR = 1U << 0
+#define CH9_H GPIOC->BSRR = 1U << 4
 #define CH10_H GPIOC->BSRR = 1U << 1
 #define CH11_H GPIOC->BSRR = 1U << 2
 #define CH12_H GPIOC->BSRR = 1U << 3
@@ -31,7 +31,7 @@
 #define CH6_L GPIOC->BSRR = 1U << (13 + 16)
 #define CH7_L GPIOC->BSRR = 1U << (14 + 16)
 #define CH8_L GPIOC->BSRR = 1U << (15 + 16)
-#define CH9_L GPIOC->BSRR = 1U << (0 + 16)
+#define CH9_L GPIOC->BSRR = 1U << (4 + 16)
 #define CH10_L GPIOC->BSRR = 1U << (1 + 16)
 #define CH11_L GPIOC->BSRR = 1U << (2 + 16)
 #define CH12_L GPIOC->BSRR = 1U << (3 + 16)
@@ -68,7 +68,7 @@ static void steering_gpio_init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 	
-	HAL_GPIO_WritePin(GPIOC, 0xE00F, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC, 0xE01E, GPIO_PIN_RESET);
 	GPIO_InitStruct.Pin = 0xE00F;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;

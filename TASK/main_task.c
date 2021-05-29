@@ -5,6 +5,7 @@
 #include "i2c.h"
 #include "paramer_save.h"
 #include "ahrs_task.h"
+#include "imu_temp_task.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -33,6 +34,7 @@ portTASK_FUNCTION(main_task, parameters)
     i2c_init();
     read_save_paramer();
     ahrs_task_create();
+    imu_temp_task_create();
     while (!main_task_exit) {
 		vTaskDelay(1000);
     }
