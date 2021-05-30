@@ -49,17 +49,17 @@ void move_vector_to_ram()
 int main(void)
 {
     //将中断向量表移至内存中
-    //move_vector_to_ram();
+    move_vector_to_ram();
     //使能I-Cache
     SCB_EnableICache();
     //使能D-Cache
-    //SCB_EnableDCache();
+    SCB_EnableDCache();
 	//初始化HAL库
 	HAL_Init();
 	//时钟系统配置72M
 	SystemClock_Config();
-    //映射QSPI到内存地址上
-    //qspi_init();
+    //初始化QSPI
+    qspi_init();
 	
 	//创建启动任务
 	xTaskCreate(vStartTask, "startTask", 128, NULL, 0, &startTask);

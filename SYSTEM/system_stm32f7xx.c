@@ -134,6 +134,8 @@
   * @{
   */
 
+  void SystemInit(void) __attribute__((section(".ARM.__at_0x90001000")));
+  
 /**
   * @}
   */

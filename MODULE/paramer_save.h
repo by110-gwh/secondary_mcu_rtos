@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#define PARAMETER_SAVE_ADDR 0x08018000
-
 typedef struct {
 	float accel_x_offset;
 	float accel_y_offset;

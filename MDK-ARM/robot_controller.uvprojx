@@ -360,7 +360,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -414,6 +414,11 @@
               <FileName>qspi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\DRIVER\qspi.c</FilePath>
+            </File>
+            <File>
+              <FileName>w25q.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\DRIVER\w25q.c</FilePath>
             </File>
           </Files>
         </Group>

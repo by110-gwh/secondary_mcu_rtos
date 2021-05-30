@@ -335,7 +335,7 @@ void accel_calibration(uint8_t where)
             paramer_save_data.accel_x_scale = new_scales.x;
             paramer_save_data.accel_y_scale = new_scales.y;
             paramer_save_data.accel_z_scale = new_scales.z;
-            //write_save_paramer();
+            write_save_paramer();
             printf("加速计矫正成功\r\n");
         }
     }
@@ -387,7 +387,7 @@ void gyro_calibration()
 	paramer_save_data.gyro_x_offset = gyroSumData.x;
 	paramer_save_data.gyro_y_offset = gyroSumData.y;
 	paramer_save_data.gyro_z_offset = gyroSumData.z;
-	//write_save_paramer();
+	write_save_paramer();
     printf("\r\nx:%d y:%d z:%d\r\n", paramer_save_data.gyro_x_offset, paramer_save_data.gyro_y_offset, paramer_save_data.gyro_z_offset);
     printf("陀螺仪矫正成功\r\n");
 }
