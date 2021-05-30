@@ -24,31 +24,18 @@ volatile uint8_t ahrs_task_exit;
 portTASK_FUNCTION(ahrs_task, pvParameters)
 {
     portTickType xLastWakeTime;
-
-    //挂起调度器
-    //vTaskSuspendAll();
 	
 	imu_init();
 	ahrs_init();
-    //唤醒调度器
-    //xTaskResumeAll();
-
-    xLastWakeTime = xTaskGetTickCount();
-
-    while (!ahrs_task_exit && (tempDataFilter > 51 || tempDataFilter < 49)) {
-		//获取imu数据
-		get_imu_data();
-        //睡眠5ms
-        vTaskDelayUntil(&xLastWakeTime, (5 / portTICK_RATE_MS));
-    }
     
-    gyro_calibration();
+    //获取系统当前节拍
     xLastWakeTime = xTaskGetTickCount();
     
     while (!ahrs_task_exit) {
         
 		//获取imu数据
 		get_imu_data();
+        //姿态解算
 		ahrs_update();
         //睡眠5ms
         vTaskDelayUntil(&xLastWakeTime, (5 / portTICK_RATE_MS));

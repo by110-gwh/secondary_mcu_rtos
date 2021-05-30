@@ -7,49 +7,26 @@
 #include <math.h>
 #include "ahrs.h"
 #include "time_cnt.h"
+#include "stdio.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "timers.h"
 
-//巴特沃斯滤波参数 200hz---30hz-98hz 采样-阻带
-static Butter_Parameter Bandstop_Filter_Parameter_30_98={
-	1,					0.6270403082828,	-0.2905268567319,
-	0.354736571634,		0.6270403082828,	0.354736571634
-};
-//巴特沃斯滤波参数 200hz---30hz-94hz  采样-阻带
-static Butter_Parameter Bandstop_Filter_Parameter_30_94={
-	1,   				0.5334540355829,	-0.2235264828971,
-	0.3882367585514,	0.5334540355829,	0.3882367585514
-};
 //巴特沃斯滤波参数
 static Butter_Parameter Gyro_Parameter;
 static Butter_Parameter Accel_Parameter;
 static Butter_Parameter Acce_Correct_Parameter;
 //巴特沃斯滤波内部数据
 static Butter_BufferData Gyro_BufferData[3];
-static Butter_BufferData Gyro_BufferData_BPF[3];
-static Butter_BufferData Accel_BufferData_BPF[3];
 static Butter_BufferData Accel_BufferData[3];
 static Butter_BufferData Butter_Buffer_Correct[3];
 //传感器原始数据
 Vector3i_t accDataFilter;
 Vector3i_t gyroDataFilter;
 Vector3i_t acceCorrectFilter;
+Vector3i_t gyroCorrectFilter;
 float tempDataFilter;
-
-//加速计校准，保存6面待矫正数据
-Vector3f_t acce_calibration_data[6];
-//加速计校准状态
-uint8_t acce_calibration_flag;
-//陀螺仪校准状态
-uint16_t gyro_calibration_flag;
-//磁力计矫正遍历角度，确保数据采集充分
-const int16_t mag_360_define[36]={
-  0,10,20,30,40,50,60,70,80,90,
-  100,110,120,130,140,150,160,170,180,190,
-  200,210,220,230,240,250,260,270,280,290,
-  300,310,320,330,340,350
-};
 
 /**********************************************************************************************************
 *函 数 名: imu_init
@@ -88,48 +65,33 @@ void get_imu_data()
 	MPU6050_ReadTemp(&tempRawData);
 	
 	//数据校准
-	accRawData.x = paramer_save_data.accel_x_scale * accRawData.x - paramer_save_data.accel_x_offset * ACCEL_SCALE;
-	accRawData.y = paramer_save_data.accel_y_scale * accRawData.y - paramer_save_data.accel_y_offset * ACCEL_SCALE;
-	accRawData.z = paramer_save_data.accel_z_scale * accRawData.z - paramer_save_data.accel_z_offset * ACCEL_SCALE;
+	accRawData.x = paramer_save_data.accel_x_scale * accRawData.x - paramer_save_data.accel_x_offset / ACCEL_SCALE;
+	accRawData.y = paramer_save_data.accel_y_scale * accRawData.y - paramer_save_data.accel_y_offset / ACCEL_SCALE;
+	accRawData.z = paramer_save_data.accel_z_scale * accRawData.z - paramer_save_data.accel_z_offset / ACCEL_SCALE;
     
 	gyroRawData.x = gyroRawData.x - paramer_save_data.gyro_x_offset;
 	gyroRawData.y = gyroRawData.y - paramer_save_data.gyro_y_offset;
 	gyroRawData.z = gyroRawData.z - paramer_save_data.gyro_z_offset;
 	
-	//陀螺仪数据带阻滤波
-//	gyroRawData.x = Butterworth_Filter(gyroRawData.x, &Gyro_BufferData_BPF[0], &Bandstop_Filter_Parameter_30_98);
-//	gyroRawData.y = Butterworth_Filter(gyroRawData.y, &Gyro_BufferData_BPF[1], &Bandstop_Filter_Parameter_30_98);
-//	gyroRawData.z = Butterworth_Filter(gyroRawData.z, &Gyro_BufferData_BPF[2], &Bandstop_Filter_Parameter_30_98);
-	
-	gyroRawData.x = Butterworth_Filter(gyroRawData.x, &Gyro_BufferData[0], &Gyro_Parameter);
-	gyroRawData.y = Butterworth_Filter(gyroRawData.y, &Gyro_BufferData[1], &Gyro_Parameter);
-	gyroRawData.z = Butterworth_Filter(gyroRawData.z, &Gyro_BufferData[2], &Gyro_Parameter);
-	
-	gyroDataFilter.x = gyroRawData.x;
-	gyroDataFilter.y = gyroRawData.y;
-	gyroDataFilter.z = gyroRawData.z;
-	
-	//加速计矫正数据带阻滤波
-//	acceCorrectFilter.x = Butterworth_Filter(accRawData.x, &Butter_Buffer_Correct[0], &Acce_Correct_Parameter);
-//	acceCorrectFilter.y = Butterworth_Filter(accRawData.y, &Butter_Buffer_Correct[1], &Acce_Correct_Parameter);
-//	acceCorrectFilter.z = Butterworth_Filter(accRawData.z, &Butter_Buffer_Correct[2], &Acce_Correct_Parameter);
-	
-    acceCorrectFilter.x = accRawData.x;
-    acceCorrectFilter.y = accRawData.y;
-    acceCorrectFilter.z = accRawData.z;
+	//陀螺仪数据低通滤波
+	gyroDataFilter.x = Butterworth_Filter(gyroRawData.x, &Gyro_BufferData[0], &Gyro_Parameter);
+	gyroDataFilter.y = Butterworth_Filter(gyroRawData.y, &Gyro_BufferData[1], &Gyro_Parameter);
+	gyroDataFilter.z = Butterworth_Filter(gyroRawData.z, &Gyro_BufferData[2], &Gyro_Parameter);
     
-	//加速计数据带阻滤波
-//	accRawData.x = Butterworth_Filter(accRawData.x, &Accel_BufferData_BPF[0], &Bandstop_Filter_Parameter_30_94);
-//	accRawData.y = Butterworth_Filter(accRawData.y, &Accel_BufferData_BPF[1], &Bandstop_Filter_Parameter_30_94);
-//	accRawData.z = Butterworth_Filter(accRawData.z, &Accel_BufferData_BPF[2], &Bandstop_Filter_Parameter_30_94);
-
-	accRawData.x = Butterworth_Filter(accRawData.x, &Accel_BufferData[0], &Accel_Parameter);
-	accRawData.y = Butterworth_Filter(accRawData.y, &Accel_BufferData[1], &Accel_Parameter);
-	accRawData.z = Butterworth_Filter(accRawData.z, &Accel_BufferData[2], &Accel_Parameter);
+	//陀螺仪矫正数据不滤波
+    gyroCorrectFilter.x = gyroRawData.x;
+    gyroCorrectFilter.y = gyroRawData.y;
+    gyroCorrectFilter.z = gyroRawData.z;
 	
-	accDataFilter.x = accRawData.x;
-	accDataFilter.y = accRawData.y;
-	accDataFilter.z = accRawData.z;
+	//加速计矫正数据低通滤波
+	acceCorrectFilter.x = Butterworth_Filter(accRawData.x, &Butter_Buffer_Correct[0], &Acce_Correct_Parameter);
+	acceCorrectFilter.y = Butterworth_Filter(accRawData.y, &Butter_Buffer_Correct[1], &Acce_Correct_Parameter);
+	acceCorrectFilter.z = Butterworth_Filter(accRawData.z, &Butter_Buffer_Correct[2], &Acce_Correct_Parameter);
+	
+	//加速计数据低通滤波
+	accDataFilter.x = Butterworth_Filter(accRawData.x, &Accel_BufferData[0], &Accel_Parameter);
+	accDataFilter.y = Butterworth_Filter(accRawData.y, &Accel_BufferData[1], &Accel_Parameter);
+	accDataFilter.z = Butterworth_Filter(accRawData.z, &Accel_BufferData[2], &Accel_Parameter);
 	
 	//温度数据不滤波
 	tempDataFilter = tempRawData;
@@ -298,25 +260,38 @@ static uint8_t Calibrate_accel(Vector3f_t accel_sample[6], Vector3f_t *accel_off
 /**********************************************************************************************************
 *函 数 名: accel_calibration
 *功能说明: 加速计校准
-*形    参: 无
+*形    参: 校准面
 *返 回 值: 无
 **********************************************************************************************************/
-void accel_calibration(void)
+//第一面飞控平放，Z轴正向朝着正上方
+//第二面飞控平放，X轴正向朝着正上方
+//第三面飞控平放，X轴正向朝着正下方
+//第四面飞控平放，Y轴正向朝着正下方
+//第五面飞控平放，Y轴正向朝着正上方
+//第六面飞控平放，Z轴正向朝着正下方
+void accel_calibration(uint8_t where)
 {
-	uint8_t i;
+    //加速计校准，保存6面待矫正数据
+    static Vector3f_t acce_calibration_data[6];
+    //加速计校准状态
+    static uint8_t acce_calibration_flag;
+    uint16_t num_samples;
     portTickType xLastWakeTime;
 	UBaseType_t this_task_priority;
 	Vector3f_t acce_sample_sum;
 	Vector3f_t new_offset;
 	Vector3f_t new_scales;
 	
-	//清空相关参数
-	acce_calibration_flag = 0;
-	for(i = 0; i < 6; i++) {
-		acce_calibration_data[i].x = 0;
-		acce_calibration_data[i].y = 0;
-		acce_calibration_data[i].z = 0;
+    //参数检查
+    if (where > 6 || where < 1) {
+        printf("参数错误\r\n");
+        return;
     }
+    
+	//清空相关参数
+    acce_sample_sum.x = 0;
+    acce_sample_sum.y = 0;
+    acce_sample_sum.z = 0;
 	paramer_save_data.accel_x_offset = 0;
 	paramer_save_data.accel_y_offset = 0;
 	paramer_save_data.accel_z_offset = 0;
@@ -324,225 +299,46 @@ void accel_calibration(void)
 	paramer_save_data.accel_y_scale = 1;
 	paramer_save_data.accel_z_scale = 1;
 	
-	//初始化imu
-	imu_init();
-	
-	//第一面飞控平放，Z轴正向朝着正上方
-	//第二面飞控平放，X轴正向朝着正上方
-	//第三面飞控平放，X轴正向朝着正下方
-	//第四面飞控平放，Y轴正向朝着正下方
-	//第五面飞控平放，Y轴正向朝着正上方
-	//第六面飞控平放，Z轴正向朝着正下方
-	while (acce_calibration_flag < 6) {
-		uint8_t key;
-		//等待遥控器指令
-		//key = rc_scan();
-		if (key == 0x01) {
-			uint16_t num_samples=0;
-			
-			//提高本任务优先级
-			this_task_priority = uxTaskPriorityGet(NULL);
-			vTaskPrioritySet(NULL, configMAX_PRIORITIES - 1);
-			
-			//累计归零
-			acce_sample_sum.x = 0;
-			acce_sample_sum.y = 0;
-			acce_sample_sum.z = 0;
-			
-			//初始化时间
-			xLastWakeTime = xTaskGetTickCount();
-			while(num_samples<1000) {
-				get_imu_data();
-				//加速度计转化为1g量程下
-				acce_sample_sum.x += acceCorrectFilter.x * ACCEL_SCALE;
-				acce_sample_sum.y += acceCorrectFilter.y * ACCEL_SCALE;
-				acce_sample_sum.z += acceCorrectFilter.z * ACCEL_SCALE;
-				num_samples++;
-				//5ms周期定时
-				vTaskDelayUntil(&xLastWakeTime, (5 / portTICK_RATE_MS));
-			}
-			//保存对应面的加速度计量
-			acce_calibration_data[acce_calibration_flag].x = acce_sample_sum.x / num_samples;
-			acce_calibration_data[acce_calibration_flag].y = acce_sample_sum.y / num_samples;
-			acce_calibration_data[acce_calibration_flag].z = acce_sample_sum.z / num_samples;
-			acce_calibration_flag++;
-			//恢复本任务优先级
-			vTaskPrioritySet(NULL, this_task_priority);
-		}
-	}
-	//用所得6面数据计算加速度校准数据
-	if(Calibrate_accel(acce_calibration_data, &new_offset, &new_scales)) {
-		//参数保存
-		paramer_save_data.accel_x_offset = new_offset.x;
-		paramer_save_data.accel_y_offset = new_offset.y;
-		paramer_save_data.accel_z_offset = new_offset.z;
-		paramer_save_data.accel_x_scale = new_scales.x;
-		paramer_save_data.accel_y_scale = new_scales.y;
-		paramer_save_data.accel_z_scale = new_scales.z;
-		write_save_paramer();
-	}
-}
-
-Least_Squares_Intermediate_Variable Mag_LS;
-void LS_Init(Least_Squares_Intermediate_Variable * pLSQ)
-{
-	memset(pLSQ, 0, sizeof(Least_Squares_Intermediate_Variable));
-}
-
-unsigned int LS_Accumulate(Least_Squares_Intermediate_Variable * pLSQ, float x, float y, float z)
-{
-	float x2 = x * x;
-	float y2 = y * y;
-	float z2 = z * z;
-
-	pLSQ->x_sumplain += x;
-	pLSQ->x_sumsq += x2;
-	pLSQ->x_sumcube += x2 * x;
-
-	pLSQ->y_sumplain += y;
-	pLSQ->y_sumsq += y2;
-	pLSQ->y_sumcube += y2 * y;
-
-	pLSQ->z_sumplain += z;
-	pLSQ->z_sumsq += z2;
-	pLSQ->z_sumcube += z2 * z;
-
-	pLSQ->xy_sum += x * y;
-	pLSQ->xz_sum += x * z;
-	pLSQ->yz_sum += y * z;
-
-	pLSQ->x2y_sum += x2 * y;
-	pLSQ->x2z_sum += x2 * z;
-
-	pLSQ->y2x_sum += y2 * x;
-	pLSQ->y2z_sum += y2 * z;
-
-	pLSQ->z2x_sum += z2 * x;
-	pLSQ->z2y_sum += z2 * y;
-
-	pLSQ->size++;
-
-	return pLSQ->size;
-}
-
-
-void LS_Calculate(Least_Squares_Intermediate_Variable * pLSQ,
-                  unsigned int max_iterations,
-                  float delta,
-                  float *sphere_x, float *sphere_y, float *sphere_z,
-                  float *sphere_radius)
-{
-	//
-	//Least Squares Fit a sphere A,B,C with radius squared Rsq to 3D data
-	//
-	//    P is a structure that has been computed with the data earlier.
-	//    P.npoints is the number of elements; the length of X,Y,Z are identical.
-	//    P's members are logically named.
-	//
-	//    X[n] is the x component of point n
-	//    Y[n] is the y component of point n
-	//    Z[n] is the z component of point n
-	//
-	//    A is the x coordiante of the sphere
-	//    B is the y coordiante of the sphere
-	//    C is the z coordiante of the sphere
-	//    Rsq is the radius squared of the sphere.
-	//
-	//This method should converge; maybe 5-100 iterations or more.
-	//
-	float x_sum = pLSQ->x_sumplain / pLSQ->size;        //sum( X[n] )
-	float x_sum2 = pLSQ->x_sumsq / pLSQ->size;    //sum( X[n]^2 )
-	float x_sum3 = pLSQ->x_sumcube / pLSQ->size;    //sum( X[n]^3 )
-	float y_sum = pLSQ->y_sumplain / pLSQ->size;        //sum( Y[n] )
-	float y_sum2 = pLSQ->y_sumsq / pLSQ->size;    //sum( Y[n]^2 )
-	float y_sum3 = pLSQ->y_sumcube / pLSQ->size;    //sum( Y[n]^3 )
-	float z_sum = pLSQ->z_sumplain / pLSQ->size;        //sum( Z[n] )
-	float z_sum2 = pLSQ->z_sumsq / pLSQ->size;    //sum( Z[n]^2 )
-	float z_sum3 = pLSQ->z_sumcube / pLSQ->size;    //sum( Z[n]^3 )
-
-	float XY = pLSQ->xy_sum / pLSQ->size;        //sum( X[n] * Y[n] )
-	float XZ = pLSQ->xz_sum / pLSQ->size;        //sum( X[n] * Z[n] )
-	float YZ = pLSQ->yz_sum / pLSQ->size;        //sum( Y[n] * Z[n] )
-	float X2Y = pLSQ->x2y_sum / pLSQ->size;    //sum( X[n]^2 * Y[n] )
-	float X2Z = pLSQ->x2z_sum / pLSQ->size;    //sum( X[n]^2 * Z[n] )
-	float Y2X = pLSQ->y2x_sum / pLSQ->size;    //sum( Y[n]^2 * X[n] )
-	float Y2Z = pLSQ->y2z_sum / pLSQ->size;    //sum( Y[n]^2 * Z[n] )
-	float Z2X = pLSQ->z2x_sum / pLSQ->size;    //sum( Z[n]^2 * X[n] )
-	float Z2Y = pLSQ->z2y_sum / pLSQ->size;    //sum( Z[n]^2 * Y[n] )
-
-	//Reduction of multiplications
-	float F0 = x_sum2 + y_sum2 + z_sum2;
-	float F1 =  0.5f * F0;
-	float F2 = -8.0f * (x_sum3 + Y2X + Z2X);
-	float F3 = -8.0f * (X2Y + y_sum3 + Z2Y);
-	float F4 = -8.0f * (X2Z + Y2Z + z_sum3);
-
-	//Set initial conditions:
-	float A = x_sum;
-	float B = y_sum;
-	float C = z_sum;
-
-	//First iteration computation:
-	float A2 = A * A;
-	float B2 = B * B;
-	float C2 = C * C;
-	float QS = A2 + B2 + C2;
-	float QB = -2.0f * (A * x_sum + B * y_sum + C * z_sum);
-
-	//Set initial conditions:
-	float Rsq = F0 + QB + QS;
-
-	//First iteration computation:
-	float Q0 = 0.5f * (QS - Rsq);
-	float Q1 = F1 + Q0;
-	float Q2 = 8.0f * (QS - Rsq + QB + F0);
-	float aA, aB, aC, nA, nB, nC, dA, dB, dC;
-
-	//Iterate N times, ignore stop condition.
-	unsigned int n = 0;
-
-	while (n < max_iterations) {
-		n++;
-
-		//Compute denominator:
-		aA = Q2 + 16.0f * (A2 - 2.0f * A * x_sum + x_sum2);
-		aB = Q2 + 16.0f * (B2 - 2.0f * B * y_sum + y_sum2);
-		aC = Q2 + 16.0f * (C2 - 2.0f * C * z_sum + z_sum2);
-		aA = (aA == 0.0f) ? 1.0f : aA;
-		aB = (aB == 0.0f) ? 1.0f : aB;
-		aC = (aC == 0.0f) ? 1.0f : aC;
-
-		//Compute next iteration
-		nA = A - ((F2 + 16.0f * (B * XY + C * XZ + x_sum * (-A2 - Q0) + A * (x_sum2 + Q1 - C * z_sum - B * y_sum))) / aA);
-		nB = B - ((F3 + 16.0f * (A * XY + C * YZ + y_sum * (-B2 - Q0) + B * (y_sum2 + Q1 - A * x_sum - C * z_sum))) / aB);
-		nC = C - ((F4 + 16.0f * (A * XZ + B * YZ + z_sum * (-C2 - Q0) + C * (z_sum2 + Q1 - A * x_sum - B * y_sum))) / aC);
-
-		//Check for stop condition
-		dA = (nA - A);
-		dB = (nB - B);
-		dC = (nC - C);
-
-		if ((dA * dA + dB * dB + dC * dC) <= delta) { break; }
-
-		//Compute next iteration's values
-		A = nA;
-		B = nB;
-		C = nC;
-		A2 = A * A;
-		B2 = B * B;
-		C2 = C * C;
-		QS = A2 + B2 + C2;
-		QB = -2.0f * (A * x_sum + B * y_sum + C * z_sum);
-		Rsq = F0 + QB + QS;
-		Q0 = 0.5f * (QS - Rsq);
-		Q1 = F1 + Q0;
-		Q2 = 8.0f * (QS - Rsq + QB + F0);
-	}
-
-	*sphere_x = A;
-	*sphere_y = B;
-	*sphere_z = C;
-	*sphere_radius = sqrt(Rsq);
+    //提高本任务优先级
+    this_task_priority = uxTaskPriorityGet(NULL);
+    vTaskPrioritySet(NULL, configMAX_PRIORITIES - 1);
+    //因为复位了校准参数，因此要等待数据更新
+    vTaskDelay(10 / portTICK_RATE_MS);
+    //初始化时间
+    xLastWakeTime = xTaskGetTickCount();
+    for (num_samples = 0; num_samples < 1000; num_samples++) {
+        //将加速计数据累加
+        acce_sample_sum.x += acceCorrectFilter.x * ACCEL_SCALE;
+        acce_sample_sum.y += acceCorrectFilter.y * ACCEL_SCALE;
+        acce_sample_sum.z += acceCorrectFilter.z * ACCEL_SCALE;
+        //5ms周期定时
+        vTaskDelayUntil(&xLastWakeTime, (5 / portTICK_RATE_MS));
+    }
+    //保存对应面的加速度计量
+    acce_calibration_data[where - 1].x = acce_sample_sum.x / num_samples;
+    acce_calibration_data[where - 1].y = acce_sample_sum.y / num_samples;
+    acce_calibration_data[where - 1].z = acce_sample_sum.z / num_samples;
+    acce_calibration_flag |= 1 << where;
+    //恢复本任务优先级
+    vTaskPrioritySet(NULL, this_task_priority);
+    printf("x:%0.3f y:%0.3f z:%0.3f\r\n", acce_calibration_data[where - 1].x, acce_calibration_data[where - 1].y, acce_calibration_data[where - 1].z);
+    printf("加速计第%d面矫正成功\r\n", where);
+    
+    //全部面校准完毕
+    if (acce_calibration_flag == 0x7E) {
+        //用所得6面数据计算加速度校准数据
+        if(Calibrate_accel(acce_calibration_data, &new_offset, &new_scales)) {
+            //参数保存
+            paramer_save_data.accel_x_offset = new_offset.x;
+            paramer_save_data.accel_y_offset = new_offset.y;
+            paramer_save_data.accel_z_offset = new_offset.z;
+            paramer_save_data.accel_x_scale = new_scales.x;
+            paramer_save_data.accel_y_scale = new_scales.y;
+            paramer_save_data.accel_z_scale = new_scales.z;
+            //write_save_paramer();
+            printf("加速计矫正成功\r\n");
+        }
+    }
 }
 
 /**********************************************************************************************************
@@ -553,28 +349,31 @@ void LS_Calculate(Least_Squares_Intermediate_Variable * pLSQ,
 **********************************************************************************************************/
 void gyro_calibration()
 {
+    uint16_t gyro_calibration_flag;
 	Vector3l_t gyroSumData;
-	Vector3i_t gyroRawData;
 	UBaseType_t this_task_priority;
     portTickType xLastWakeTime;
 	
+    //复位校准参数
     gyroSumData.x = 0;
     gyroSumData.y = 0;
     gyroSumData.z = 0;
-	//IMU初始化
-	imu_init();
+	paramer_save_data.gyro_x_offset = 0;
+	paramer_save_data.gyro_y_offset = 0;
+	paramer_save_data.gyro_z_offset = 0;
+    
 	//提高本任务优先级
 	this_task_priority = uxTaskPriorityGet(NULL);
 	vTaskPrioritySet(NULL, configMAX_PRIORITIES - 1);
+    //因为复位了校准参数，因此要等待数据更新
+    vTaskDelay(10 / portTICK_RATE_MS);
 	//得到初始时间
 	xLastWakeTime = xTaskGetTickCount();
 	for (gyro_calibration_flag = 0; gyro_calibration_flag < 400; gyro_calibration_flag++) {
-		//读取陀螺仪传感器
-		MPU6050_ReadGyro(&gyroRawData);
 		//将陀螺仪数据累加
-		gyroSumData.x += gyroRawData.x;
-		gyroSumData.y += gyroRawData.y;
-		gyroSumData.z += gyroRawData.z;
+		gyroSumData.x += gyroCorrectFilter.x;
+		gyroSumData.y += gyroCorrectFilter.y;
+		gyroSumData.z += gyroCorrectFilter.z;
 		//5ms周期定时
 		vTaskDelayUntil(&xLastWakeTime, (5 / portTICK_RATE_MS));
 	}
@@ -589,4 +388,6 @@ void gyro_calibration()
 	paramer_save_data.gyro_y_offset = gyroSumData.y;
 	paramer_save_data.gyro_z_offset = gyroSumData.z;
 	//write_save_paramer();
+    printf("\r\nx:%d y:%d z:%d\r\n", paramer_save_data.gyro_x_offset, paramer_save_data.gyro_y_offset, paramer_save_data.gyro_z_offset);
+    printf("陀螺仪矫正成功\r\n");
 }

@@ -153,24 +153,7 @@
           <Name></Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint>
-        <Bp>
-          <Number>0</Number>
-          <Type>0</Type>
-          <LineNumber>250</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>-1879043260</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\DRIVER\i2c.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\robot_controller\../DRIVER/i2c.c\250</Expression>
-        </Bp>
-      </Breakpoint>
+      <Breakpoint/>
       <WatchWindow1>
         <Ww>
           <count>0</count>
@@ -220,22 +203,9 @@
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gyroDataFilter</ItemText>
-        </Ww>
-        <Ww>
-          <count>10</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>Yaw_without_acce</ItemText>
+          <ItemText>accDataFilter</ItemText>
         </Ww>
       </WatchWindow1>
-      <MemoryWindow1>
-        <Mm>
-          <WinNumber>1</WinNumber>
-          <SubType>2</SubType>
-          <ItemText>0x90000000</ItemText>
-          <AccSizeX>0</AccSizeX>
-        </Mm>
-      </MemoryWindow1>
       <MemoryWindow2>
         <Mm>
           <WinNumber>2</WinNumber>

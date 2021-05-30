@@ -298,7 +298,7 @@ void usmart_exe(void)
 		}
 		if(i!=pnum-1)printf(",");
 	}
-	printf(")");
+	printf(");\r\n");
 #if USMART_ENTIMX_SCAN==1
 	usmart_reset_runtime();	//计时器清零,开始计时
 #endif
@@ -348,9 +348,9 @@ void usmart_exe(void)
 #endif
 	if(rval==1)//需要返回值.
 	{
-		if(usmart_dev.sptype==SP_TYPE_DEC)printf("=%lu;\r\n",res);//输出执行结果(10进制参数显示)
-		else printf("=0X%X;\r\n",res);//输出执行结果(16进制参数显示)	   
-	}else printf(";\r\n");		//不需要返回值,直接输出结束
+		if(usmart_dev.sptype==SP_TYPE_DEC)printf("return:%lu;\r\n",res);//输出执行结果(10进制参数显示)
+		else printf("return:0X%X;\r\n",res);//输出执行结果(16进制参数显示)	   
+	}
 	if(usmart_dev.runtimeflag)	//需要显示函数执行时间
 	{ 
 		printf("Function Run Time:%d.%1dms\r\n",usmart_dev.runtime/10,usmart_dev.runtime%10);//打印函数执行时间 

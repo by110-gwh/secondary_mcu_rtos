@@ -41,19 +41,12 @@ typedef struct
 extern Vector3i_t accDataFilter;
 extern Vector3i_t gyroDataFilter;
 extern Vector3i_t acceCorrectFilter;
-//extern Vector3i_t MagDataFilter;
+extern Vector3i_t gyroCorrectFilter;
 extern float tempDataFilter;
-
-extern Vector3f_t acce_calibration_data[6];
-extern uint8_t acce_calibration_flag;
-//extern uint8_t mag_360_flag[3][36];
-//extern uint8_t mag_calibration_flag;
-//extern float mag_correct_yaw;
 
 void imu_init(void);
 void get_imu_data(void);
-void accel_calibration(void);
-//void mag_calibration(void);
+void accel_calibration(uint8_t where);
 void gyro_calibration(void);
 
 #endif

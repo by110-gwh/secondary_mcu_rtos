@@ -15,6 +15,8 @@
 xTaskHandle steering_updata_task_handle;
 //任务退出标志
 volatile uint8_t steering_updata_task_exit;
+//任务挂起标志
+volatile uint8_t steering_updata_task_hang;
 
 /**********************************************************************************************************
 *函 数 名: steering_updata_task
@@ -30,30 +32,32 @@ portTASK_FUNCTION(steering_updata_task, pvParameters)
     while (!steering_updata_task_exit)
     {
 		uint8_t i;
-		//16通道舵机遍历一遍
-		for (i = 0; i < 16; i++) {
-			//需要更新舵机角度
-			if (steering_pulse_ch[i] != steering_position[i]) {
-				//初始赋值
-				if (steering_pulse_ch[i] == 0)
-					steering_pulse_ch[i] = steering_position[i];
-				//角度减小方向
-				else if(steering_pulse_ch[i] > steering_position[i]) {
-					//根据差值选择步进
-					if (steering_pulse_ch[i] - steering_position[i] >= steering_speed[i])
-						steering_pulse_ch[i] -=  steering_speed[i];
-					else
-						steering_pulse_ch[i] = steering_position[i];
-				//角度增大方向
-				} else {
-					//根据差值选择步进
-					if (steering_position[i] - steering_pulse_ch[i] >= steering_speed[i])
-						steering_pulse_ch[i] +=  steering_speed[i];
-					else
-						steering_pulse_ch[i] = steering_position[i];
-				}
-			}
-		}
+        if (!steering_updata_task_hang) {
+            //16通道舵机遍历一遍
+            for (i = 0; i < 16; i++) {
+                //需要更新舵机角度
+                if (steering_pulse_ch[i] != steering_position[i]) {
+                    //初始赋值
+                    if (steering_pulse_ch[i] == 0)
+                        steering_pulse_ch[i] = steering_position[i];
+                    //角度减小方向
+                    else if(steering_pulse_ch[i] > steering_position[i]) {
+                        //根据差值选择步进
+                        if (steering_pulse_ch[i] - steering_position[i] >= steering_speed[i])
+                            steering_pulse_ch[i] -=  steering_speed[i];
+                        else
+                            steering_pulse_ch[i] = steering_position[i];
+                    //角度增大方向
+                    } else {
+                        //根据差值选择步进
+                        if (steering_position[i] - steering_pulse_ch[i] >= steering_speed[i])
+                            steering_pulse_ch[i] +=  steering_speed[i];
+                        else
+                            steering_pulse_ch[i] = steering_position[i];
+                    }
+                }
+            }
+        }
         //睡眠20ms
         vTaskDelayUntil(&xLastWakeTime, (20 / portTICK_RATE_MS));
     }
@@ -69,6 +73,7 @@ portTASK_FUNCTION(steering_updata_task, pvParameters)
 **********************************************************************************************************/
 void steering_updata_task_create(void)
 {
+    steering_updata_task_hang = 0;
 	steering_updata_task_exit = 0;
     xTaskCreate(steering_updata_task, "steering_updata_task", STEERING_UPDATA_TASK_STACK, NULL, STEERING_UPDATA_TASK_PRIORITY, &steering_updata_task_handle);
 }

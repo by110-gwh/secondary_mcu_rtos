@@ -8,6 +8,7 @@
 
 extern xTaskHandle steering_updata_task_handle;
 extern volatile uint8_t steering_updata_task_exit;
+extern volatile uint8_t steering_updata_task_hang;
 
 void steering_updata_task_create(void);
 

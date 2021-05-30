@@ -140,8 +140,7 @@ portTASK_FUNCTION(steering_task, pvParameters)
 					steering_action_task_exit = 1;
 					if (steering_action_task_handle)
 						vTaskResume(steering_action_task_handle);
-					if (steering_updata_task_handle)
-						vTaskResume(steering_updata_task_handle);
+					steering_updata_task_hang = 0;
 					steering_speed[rec_cmd.chanel] = (rec_cmd.data_h << 8 | rec_cmd.data_l) * 2;
 				}
 				//请求设置位置
@@ -149,8 +148,7 @@ portTASK_FUNCTION(steering_task, pvParameters)
 					steering_action_task_exit = 1;
 					if (steering_action_task_handle)
 						vTaskResume(steering_action_task_handle);
-					if (steering_updata_task_handle)
-						vTaskResume(steering_updata_task_handle);
+					steering_updata_task_hang = 0;
 					steering_position[rec_cmd.chanel] = rec_cmd.data_h << 8 | rec_cmd.data_l;
 				}
 				//动作组下载
@@ -158,8 +156,7 @@ portTASK_FUNCTION(steering_task, pvParameters)
 					steering_action_task_exit = 1;
 					if (steering_action_task_handle)
 						vTaskResume(steering_action_task_handle);
-					if (steering_updata_task_handle)
-						vTaskResume(steering_updata_task_handle);
+					steering_updata_task_hang = 0;
 					USBD_CUSTOM_HID_ReceivePacket(&hUsbDeviceFS);
 					action_download();
 				}
@@ -168,8 +165,7 @@ portTASK_FUNCTION(steering_task, pvParameters)
 					steering_action_task_exit = 1;
 					if (steering_action_task_handle)
 						vTaskResume(steering_action_task_handle);
-					if (steering_updata_task_handle)
-						vTaskResume(steering_updata_task_handle);
+					steering_updata_task_hang = 0;
 					action_erase();
 				}
 				//动作组执行
@@ -181,15 +177,13 @@ portTASK_FUNCTION(steering_task, pvParameters)
 				if (rec_cmd.cmd == 11 && rec_cmd.data_l == 1) {
 					if (steering_action_task_handle)
 						vTaskSuspend(steering_action_task_handle);
-					if (steering_updata_task_handle)
-						vTaskSuspend(steering_updata_task_handle);
+					steering_updata_task_hang = 1;
 				}
 				//恢复运行
 				if (rec_cmd.cmd == 11 && rec_cmd.data_l == 0) {
 					if (steering_action_task_handle)
 						vTaskResume(steering_action_task_handle);
-					if (steering_updata_task_handle)
-						vTaskResume(steering_updata_task_handle);
+					steering_updata_task_hang = 0;
 				}
 			}
 			//请求USB接收数据
