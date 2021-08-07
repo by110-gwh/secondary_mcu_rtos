@@ -1,5 +1,5 @@
 #include "mpu6050.h"
-#include "i2c.h"
+#include "i2c1.h"
 
 //I2C地址
 #define MPU6050_ADR 0x68
@@ -28,8 +28,6 @@
 #define USER_CTRL		0x6A
 #define INT_PIN_CFG		0x37
 
-
-
 /**********************************************************************************************************
 *函 数 名: MPU6050_Detect
 *功能说明: 检测MPU6050是否存在
@@ -40,7 +38,7 @@ uint8_t MPU6050_Detect(void)
 {
     uint8_t who_am_i;
 
-    i2c_single_read(MPU6050_ADR, WHO_AM_I, &who_am_i);
+    i2c1_single_read(MPU6050_ADR, WHO_AM_I, &who_am_i);
 
     if(who_am_i == MPU6050_ADR)
         return 1;
@@ -57,15 +55,15 @@ uint8_t MPU6050_Detect(void)
 void MPU6050_Init(void)
 {
 	//关闭所有中断,解除休眠
-	i2c_single_write(MPU6050_ADR, PWR_MGMT_1, 0x00);
+	i2c1_single_write(MPU6050_ADR, PWR_MGMT_1, 0x00);
 	//设置采样率
-	i2c_single_write(MPU6050_ADR, SMPLRT_DIV, 0x00);
+	i2c1_single_write(MPU6050_ADR, SMPLRT_DIV, 0x00);
     //内部低通滤波频率，加速度计94hz,陀螺仪98hz
-	i2c_single_write(MPU6050_ADR, MPU_CONFIG, 0x00);
+	i2c1_single_write(MPU6050_ADR, MPU_CONFIG, 0x00);
 	//设置陀螺仪的满量程500deg/s
-	i2c_single_write(MPU6050_ADR, GYRO_CONFIG, 0x08);
+	i2c1_single_write(MPU6050_ADR, GYRO_CONFIG, 0x08);
 	//设置加速度计的满量程范围8g (4096 LSB/g)
-	i2c_single_write(MPU6050_ADR, ACCEL_CONFIG, 0x10);
+	i2c1_single_write(MPU6050_ADR, ACCEL_CONFIG, 0x10);
 }
 
 /**********************************************************************************************************
@@ -76,9 +74,16 @@ void MPU6050_Init(void)
 **********************************************************************************************************/
 void MPU6050_ReadAcc(Vector3i_t* acc)
 {
+    int ret;
+    uint8_t retry;
     uint8_t buffer[6];
 
-	i2c_multi_read_it(MPU6050_ADR, ACCEL_XOUT_H, buffer, 6);
+    retry = 5;
+    while (retry--) {
+        ret = i2c1_multi_read(MPU6050_ADR, ACCEL_XOUT_H, buffer, 6);
+        if (ret == 0)
+            break;
+    }
 	
     acc->x = ((((int16_t)buffer[0]) << 8) | buffer[1]);
     acc->y = ((((int16_t)buffer[2]) << 8) | buffer[3]);
@@ -98,9 +103,17 @@ void MPU6050_ReadAcc(Vector3i_t* acc)
 **********************************************************************************************************/
 void MPU6050_ReadGyro(Vector3i_t* gyro)
 {
+    int ret;
+    uint8_t retry;
     uint8_t buffer[6];
 
-	i2c_multi_read_it(MPU6050_ADR, GYRO_XOUT_H, buffer, 6);
+    retry = 5;
+    while (retry--) {
+        ret = i2c1_multi_read(MPU6050_ADR, GYRO_XOUT_H, buffer, 6);
+        if (ret == 0)
+            break;
+    }
+
     gyro->x = ((((int16_t)buffer[0]) << 8) | buffer[1]);
     gyro->y = ((((int16_t)buffer[2]) << 8) | buffer[3]);
     gyro->z = ((((int16_t)buffer[4]) << 8) | buffer[5]);
@@ -109,7 +122,6 @@ void MPU6050_ReadGyro(Vector3i_t* gyro)
     gyro->x = gyro->x;
     gyro->y = gyro->y;
     gyro->z = gyro->z;
-
 }
 
 /**********************************************************************************************************
@@ -120,10 +132,18 @@ void MPU6050_ReadGyro(Vector3i_t* gyro)
 **********************************************************************************************************/
 void MPU6050_ReadTemp(float* temp)
 {
+    int ret;
+    uint8_t retry;
     uint8_t buffer[2];
-    static int16_t temperature_temp;
+    int16_t temperature_temp;
 
-	i2c_multi_read_it(MPU6050_ADR, TEMP_OUT_H, buffer, 2);
+    retry = 5;
+    while (retry--) {
+        ret = i2c1_multi_read(MPU6050_ADR, TEMP_OUT_H, buffer, 2);
+        if (ret == 0)
+            break;
+    }
+    
     temperature_temp = ((((int16_t)buffer[0]) << 8) | buffer[1]);
     *temp = 36.53f + (float)temperature_temp / 340.f;
 }

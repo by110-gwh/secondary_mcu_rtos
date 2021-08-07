@@ -1,6 +1,5 @@
 #include "main.h"
 #include "main_task.h"
-#include "qspi.h"
 #include <string.h>
 
 #include "FreeRTOS.h"
@@ -26,21 +25,6 @@ portTASK_FUNCTION(vStartTask, pvParameters)
 }
 
 /**********************************************************************************************************
-*函 数 名: move_vector_to_ram
-*功能说明: 将中断向量表移至内存中，增加中断速度
-*形    参: 无
-*返 回 值: 无
-**********************************************************************************************************/
-void move_vector_to_ram()
-{
-    __align(512) static uint32_t vector_ram[256];
-    __disable_irq();
-    memcpy(vector_ram, (void*)0x90000000, sizeof(vector_ram));
-    SCB->VTOR = (uint32_t)vector_ram;
-    __enable_irq();
-}
-
-/**********************************************************************************************************
 *函 数 名: main
 *功能说明: 系统程序入口
 *形    参: 无
@@ -48,18 +32,14 @@ void move_vector_to_ram()
 **********************************************************************************************************/
 int main(void)
 {
-    //将中断向量表移至内存中
-    move_vector_to_ram();
     //使能I-Cache
     SCB_EnableICache();
     //使能D-Cache
     SCB_EnableDCache();
 	//初始化HAL库
 	HAL_Init();
-	//时钟系统配置72M
+	//时钟系统配置
 	SystemClock_Config();
-    //初始化QSPI
-    qspi_init();
 	
 	//创建启动任务
 	xTaskCreate(vStartTask, "startTask", 128, NULL, 0, &startTask);

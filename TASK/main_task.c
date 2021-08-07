@@ -2,10 +2,11 @@
 #include "steering_task.h"
 #include "usmart_task.h"
 #include "time_cnt.h"
-#include "i2c.h"
+#include "i2c1.h"
 #include "paramer_save.h"
 #include "ahrs_task.h"
 #include "imu_temp_task.h"
+#include "qspi.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -28,11 +29,12 @@ volatile uint8_t main_task_exit;
 **********************************************************************************************************/
 portTASK_FUNCTION(main_task, parameters)
 {
+    qspi_init();
     Get_Time_Init();
+    i2c1_init();
+    read_save_paramer();
     steering_task_create();
     usmart_task_create();
-    i2c_init();
-    read_save_paramer();
     ahrs_task_create();
     imu_temp_task_create();
     while (!main_task_exit) {

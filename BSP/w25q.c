@@ -77,7 +77,7 @@ void w25q_write_page(uint8_t *pBuffer, uint32_t addr, uint16_t cnt)
     //写使能
 	w25q_write_enable();
     spi_send_cmd(W25X_PAGE_PROGRAM, addr, 1, 0, cnt);
-	qspi_transmit(pBuffer, cnt);	         	   
+	qspi_transmit(pBuffer, cnt);
     //等待写入结束
 	w25q_wait_busy();
 } 
@@ -90,7 +90,7 @@ void w25q_write_page(uint8_t *pBuffer, uint32_t addr, uint16_t cnt)
 *返 回 值: 无
 **********************************************************************************************************/
 void w25q_write(uint8_t *pBuffer, uint32_t addr, uint16_t cnt)
-{ 			 		 
+{
 	uint16_t pageremain;
     //单页剩余的字节数
 	pageremain = 256 - addr % 256;
@@ -139,7 +139,7 @@ void w25q_erase_sector(uint32_t addr)
 *形    参: 要擦除地址 长度
 *返 回 值: 无
 **********************************************************************************************************/
-void w25q_erase(uint32_t addr, uint32_t cnt)   
+void w25q_erase(uint32_t addr, uint32_t cnt)
 {
     uint16_t pageremain;
     //单扇区剩余的字节数
@@ -153,10 +153,10 @@ void w25q_erase(uint32_t addr, uint32_t cnt)
 		if (cnt == pageremain)
             break;
 	 	else {
-			addr += pageremain;	
+			addr += pageremain;
 
             //减去已经擦除的字节数
-			cnt -= pageremain;			  
+			cnt -= pageremain;
 			if(cnt > 256)
                 //一次可以擦除4096个字节
                 pageremain = 4096;
@@ -174,7 +174,7 @@ void w25q_erase(uint32_t addr, uint32_t cnt)
 *返 回 值: 无
 **********************************************************************************************************/
 void w25q_wait_busy(void)
-{   
+{
     //等待BUSY位清空
     while((w25q_read_sr(1) & 0x01) == 0x01)
         vTaskDelay(1);

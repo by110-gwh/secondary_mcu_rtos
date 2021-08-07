@@ -1,5 +1,6 @@
-#include "i2c.h"
+#include "i2c1.h"
 #include "stm32f7xx_hal.h"
+#include "time_cnt.h"
 
 #include "FreeRTOS.h"
 #include "queue.h"
@@ -11,13 +12,71 @@
 static QueueHandle_t i2c_queue;
 //I2C外设句柄
 I2C_HandleTypeDef hi2c1;
+
+//一些函数的声明
+void HAL_I2C1_MemTxCpltCallback(I2C_HandleTypeDef *hi2c);
+void HAL_I2C1_MemRxCpltCallback(I2C_HandleTypeDef *hi2c);
+void HAL_I2C1_ErrorCallback(I2C_HandleTypeDef *hi2c);
+void HAL_I2C1_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c);
+void HAL_I2C1_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c);
+
 /**********************************************************************************************************
-*函 数 名: Spi_GPIO_Init
-*功能说明: SPI从机设备CS引脚初始化
+*函 数 名: i2c1_fail_recover
+*功能说明: I2C1错误恢复
 *形    参: 无
 *返 回 值: 无
 **********************************************************************************************************/
-void i2c_init(void)
+static void i2c1_fail_recover(void)
+{
+    int nRetry = 0;
+    if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == 0 || HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8) == 0) {
+        //配置I2C引脚为开漏输出
+        GPIO_InitTypeDef GPIO_InitStruct = {0};
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8 | GPIO_PIN_7, GPIO_PIN_SET);
+        GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_7;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+        
+        do{
+            //产生CLK脉冲
+            delay_us(10);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+            delay_us(10);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+        //判断SDA是否恢复
+        }while(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == 0 && nRetry++ < 70);
+        
+        //拉低SDA
+        delay_us(10);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+        //拉高CLK
+        delay_us(10);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+        //恢复SDa
+        delay_us(10);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+        
+        //恢复GPIO配置
+        GPIO_InitStruct.Pin = GPIO_PIN_7 | GPIO_PIN_8;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+        GPIO_InitStruct.Pull = GPIO_PULLUP;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    }
+    //重新初始化I2C
+	HAL_I2C_Init(&hi2c1);
+}
+
+/**********************************************************************************************************
+*函 数 名: i2c1_init
+*功能说明: I2C1初始化
+*形    参: 无
+*返 回 值: 无
+**********************************************************************************************************/
+void i2c1_init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	
@@ -26,13 +85,16 @@ void i2c_init(void)
     __HAL_RCC_I2C1_CLK_ENABLE();
 	
 	//IO初始化
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
+    GPIO_InitStruct.Pin = GPIO_PIN_7 | GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    //I2C1错误恢复
+    i2c1_fail_recover();
+    
 	//I2C初始化
 	hi2c1.Instance = I2C1;
     hi2c1.Init.Timing = 0x6000030D;
@@ -44,6 +106,13 @@ void i2c_init(void)
     hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
     hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 	HAL_I2C_Init(&hi2c1);
+    
+    //I2C中断回调函数注册
+    hi2c1.MemRxCpltCallback = HAL_I2C1_MemRxCpltCallback;
+    hi2c1.MemTxCpltCallback = HAL_I2C1_MemTxCpltCallback;
+    hi2c1.ErrorCallback = HAL_I2C1_ErrorCallback;
+    hi2c1.MasterRxCpltCallback = HAL_I2C1_MasterRxCpltCallback;
+    hi2c1.MasterTxCpltCallback = HAL_I2C1_MasterTxCpltCallback;
 	
     //使能模拟滤波器
     HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE);
@@ -60,12 +129,12 @@ void i2c_init(void)
 }
 
 /**********************************************************************************************************
-*函 数 名: i2c_transmit
-*功能说明: i2c传输
+*函 数 名: i2c1_transmit
+*功能说明: i2c1传输
 *形    参: 7bit从机地址 是否为写 写入数据 写入数量
 *返 回 值: 写入状态：0：成功，-1：错误
 **********************************************************************************************************/
-int i2c_transmit(uint8_t slave_address, uint8_t is_write, uint8_t *pdata, uint8_t count)
+int i2c1_transmit(uint8_t slave_address, uint8_t is_write, uint8_t *pdata, uint8_t count)
 {
     uint8_t res;
     if (is_write) {
@@ -75,133 +144,91 @@ int i2c_transmit(uint8_t slave_address, uint8_t is_write, uint8_t *pdata, uint8_
     }
     
     xQueueReceive(i2c_queue, (void *) &res, portMAX_DELAY);
-	if (res & I2C_EVENT_ERROR)
+	if (res & I2C_EVENT_ERROR) {
+        i2c1_fail_recover();
 		return -1;
+    }
 	return 0;
 }
 
 /**********************************************************************************************************
-*函 数 名: i2c_single_write
-*功能说明: 查询方式进行单个寄存器写入
-*形    参: 7bit从机地址 寄存器地址 写入数据
-*返 回 值: 写入状态：0：成功，-1：错误
-**********************************************************************************************************/
-int i2c_single_write(uint8_t slave_address, uint8_t reg_address, uint8_t reg_data)
-{
-	if (HAL_I2C_Mem_Write(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, &reg_data, 1, 1) != HAL_OK)
-		return -1;
-	return 0;
-}
-
-/**********************************************************************************************************
-*函 数 名: i2c_single_write_it
+*函 数 名: i2c1_single_write
 *功能说明: 中断方式进行单个寄存器写入
 *形    参: 7bit从机地址 寄存器地址 写入数据
 *返 回 值: 写入状态：0：成功，-1：错误
 **********************************************************************************************************/
-int i2c_single_write_it(uint8_t slave_address, uint8_t reg_address, uint8_t reg_data)
+int i2c1_single_write(uint8_t slave_address, uint8_t reg_address, uint8_t reg_data)
 {
 	uint8_t res;
 	if (HAL_I2C_Mem_Write_IT(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, &reg_data, 1) != HAL_OK)
 		return -1;
 	
 	xQueueReceive(i2c_queue, (void *) &res, portMAX_DELAY);
-	if (res & I2C_EVENT_ERROR)
+	if (res & I2C_EVENT_ERROR) {
+        i2c1_fail_recover();
 		return -1;
+    }
 	return 0;
 }
 
 /**********************************************************************************************************
-*函 数 名: i2c_single_read
-*功能说明: 查询方式进行单个寄存器读取
-*形    参: 7bit从机地址 寄存器地址 读取数据
-*返 回 值: 读取状态：0：成功，-1：错误
-**********************************************************************************************************/
-int i2c_single_read(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data)
-{
-	if (HAL_I2C_Mem_Read(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, reg_data, 1, 1) != HAL_OK)
-		return -1;
-	return 0;
-}
-
-/**********************************************************************************************************
-*函 数 名: i2c_single_read_it
+*函 数 名: i2c1_single_read
 *功能说明: 中断方式进行单个寄存器读取
 *形    参: 7bit从机地址 寄存器地址 读取数据
 *返 回 值: 读取状态：0：成功，-1：错误
 **********************************************************************************************************/
-int i2c_single_read_it(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data)
+int i2c1_single_read(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data)
 {
 	uint8_t res;
 	if (HAL_I2C_Mem_Read_IT(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, reg_data, 1) != HAL_OK)
 		return -1;
 	
 	xQueueReceive(i2c_queue, (void *) &res, portMAX_DELAY);
-	if (res & I2C_EVENT_ERROR)
+	if (res & I2C_EVENT_ERROR) {
+        i2c1_fail_recover();
 		return -1;
+    }
 	return 0;
 }
 
 /**********************************************************************************************************
-*函 数 名: i2c_multi_read
-*功能说明: 查询方式进行多个寄存器读取
-*形    参: 7bit从机地址 寄存器地址 读取数据 读取个数
-*返 回 值: 读取状态：0：成功，-1：错误
-**********************************************************************************************************/
-int i2c_multi_read(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data, uint8_t read_cnt)
-{
-	if (HAL_I2C_Mem_Read(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, reg_data, read_cnt, 1) != HAL_OK)
-		return -1;
-	return 0;
-}
-
-/**********************************************************************************************************
-*函 数 名: i2c_multi_read_it
+*函 数 名: i2c1_multi_read
 *功能说明: 中断方式进行多个寄存器读取
 *形    参: 7bit从机地址 寄存器地址 读取数据 读取个数
 *返 回 值: 读取状态：0：成功，-1：错误
 **********************************************************************************************************/
-int i2c_multi_read_it(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data, uint8_t read_cnt)
+int i2c1_multi_read(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data, uint8_t read_cnt)
 {
 	uint8_t res;
 	if (HAL_I2C_Mem_Read_IT(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, reg_data, read_cnt) != HAL_OK)
 		return -1;
 	
 	xQueueReceive(i2c_queue, (void *) &res, portMAX_DELAY);
-	if (res & I2C_EVENT_ERROR)
+	if (res & I2C_EVENT_ERROR) {
+        i2c1_fail_recover();
 		return -1;
+    }
 	
 	return 0;
 }
 
 /**********************************************************************************************************
-*函 数 名: i2c_multi_write
-*功能说明: 查询方式进行多个寄存器写入
-*形    参: 7bit从机地址 寄存器地址 读取数据 读取个数
-*返 回 值: 读取状态：0：成功，-1：错误
-**********************************************************************************************************/
-int i2c_multi_write(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data, uint8_t read_cnt)
-{
-	if (HAL_I2C_Mem_Write(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, reg_data, read_cnt, 1) != HAL_OK)
-		return -1;
-	return 0;
-}
-
-/**********************************************************************************************************
-*函 数 名: i2c_multi_write_it
+*函 数 名: i2c1_multi_write
 *功能说明: 中断方式进行多个寄存器写入
 *形    参: 7bit从机地址 寄存器地址 读取数据 读取个数
 *返 回 值: 读取状态：0：成功，-1：错误
 **********************************************************************************************************/
-int i2c_multi_write_it(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data, uint8_t read_cnt)
+int i2c1_multi_write(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_data, uint8_t read_cnt)
 {
 	uint8_t res;
 	if (HAL_I2C_Mem_Write_IT(&hi2c1, slave_address << 1, reg_address, I2C_MEMADD_SIZE_8BIT, reg_data, read_cnt) != HAL_OK)
 		return -1;
 	
 	xQueueReceive(i2c_queue, (void *) &res, portMAX_DELAY);
-	if (res & I2C_EVENT_ERROR)
+	if (res & I2C_EVENT_ERROR) {
+        i2c1_fail_recover();
 		return -1;
+    }
 	
 	return 0;
 }
@@ -212,7 +239,7 @@ int i2c_multi_write_it(uint8_t slave_address, uint8_t reg_address, uint8_t *reg_
 *形    参: I2C句柄
 *返 回 值: 无
 **********************************************************************************************************/
-void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C1_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t data;
 	BaseType_t xResult;
@@ -229,7 +256,7 @@ void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
 *形    参: I2C句柄
 *返 回 值: 无
 **********************************************************************************************************/
-void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C1_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t data;
 	BaseType_t xResult;
@@ -246,7 +273,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 *形    参: I2C句柄
 *返 回 值: 无
 **********************************************************************************************************/
-void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C1_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t data;
 	BaseType_t xResult;
@@ -263,7 +290,7 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 *形    参: I2C句柄
 *返 回 值: 无
 **********************************************************************************************************/
-void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C1_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t data;
 	BaseType_t xResult;
@@ -280,7 +307,7 @@ void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
 *形    参: I2C句柄
 *返 回 值: 无
 **********************************************************************************************************/
-void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C1_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t data;
 	BaseType_t xResult;

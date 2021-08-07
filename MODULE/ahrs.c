@@ -7,10 +7,10 @@
 
 typedef struct
 {
-  float q0;
-  float q1;
-  float q2;
-  float q3;
+    float q0;
+    float q1;
+    float q2;
+    float q3;
 } Vector4q;
 
 #define PI 3.1415926f
@@ -85,11 +85,11 @@ void ahrs_init(void)
 **********************************************************************************************************/
 float constrain(float value, const float min_val, const float max_val)
 {
-  if (value >= max_val)
-    value = max_val;
-  if (value <= min_val)
-    value = min_val;
-  return value;
+    if (value >= max_val)
+        value = max_val;
+    if (value <= min_val)
+        value = min_val;
+    return value;
 }
 
 /**********************************************************************************************************
@@ -100,21 +100,21 @@ float constrain(float value, const float min_val, const float max_val)
 **********************************************************************************************************/
 void ComputeRotationMatrix(void)
 {
-  Sin_Pitch = sin(Pitch * DEG2RAD);
-  Cos_Pitch = cos(Pitch * DEG2RAD);
-  Sin_Roll = sin(Roll * DEG2RAD);
-  Cos_Roll = cos(Roll * DEG2RAD);
-  Sin_Yaw = sin(Yaw * DEG2RAD);
-  Cos_Yaw = cos(Yaw * DEG2RAD);
-  rMat[0][0] = Cos_Yaw * Cos_Roll;
-  rMat[0][1] = Sin_Pitch * Sin_Roll * Cos_Yaw - Cos_Pitch * Sin_Yaw;
-  rMat[0][2] = Sin_Pitch * Sin_Yaw + Cos_Pitch * Sin_Roll * Cos_Yaw;
-  rMat[1][0] = Sin_Yaw * Cos_Roll;
-  rMat[1][1] = Sin_Pitch * Sin_Roll * Sin_Yaw + Cos_Pitch * Cos_Yaw;
-  rMat[1][2] = Cos_Pitch * Sin_Roll * Sin_Yaw - Sin_Pitch * Cos_Yaw;
-  rMat[2][0] = -Sin_Roll;
-  rMat[2][1] = Sin_Pitch * Cos_Roll;
-  rMat[2][2] = Cos_Pitch * Cos_Roll;
+    Sin_Pitch = sin(Pitch * DEG2RAD);
+    Cos_Pitch = cos(Pitch * DEG2RAD);
+    Sin_Roll = sin(Roll * DEG2RAD);
+    Cos_Roll = cos(Roll * DEG2RAD);
+    Sin_Yaw = sin(Yaw * DEG2RAD);
+    Cos_Yaw = cos(Yaw * DEG2RAD);
+    rMat[0][0] = Cos_Yaw * Cos_Roll;
+    rMat[0][1] = Sin_Pitch * Sin_Roll * Cos_Yaw - Cos_Pitch * Sin_Yaw;
+    rMat[0][2] = Sin_Pitch * Sin_Yaw + Cos_Pitch * Sin_Roll * Cos_Yaw;
+    rMat[1][0] = Sin_Yaw * Cos_Roll;
+    rMat[1][1] = Sin_Pitch * Sin_Roll * Sin_Yaw + Cos_Pitch * Cos_Yaw;
+    rMat[1][2] = Cos_Pitch * Sin_Roll * Sin_Yaw - Sin_Pitch * Cos_Yaw;
+    rMat[2][0] = -Sin_Roll;
+    rMat[2][1] = Sin_Pitch * Cos_Roll;
+    rMat[2][2] = Cos_Pitch * Cos_Roll;
 }
 
 /**********************************************************************************************************
@@ -125,9 +125,9 @@ void ComputeRotationMatrix(void)
 **********************************************************************************************************/
 void Vector_From_BodyFrame2EarthFrame(Vector3f_t *bf, Vector3f_t *ef)
 {
-  ef->x = rMat[0][0] * bf->x + rMat[0][1] * bf->y + rMat[0][2] * bf->z;
-  ef->y = rMat[1][0] * bf->x + rMat[1][1] * bf->y + rMat[1][2] * bf->z;
-  ef->z = rMat[2][0] * bf->x + rMat[2][1] * bf->y + rMat[2][2] * bf->z;
+    ef->x = rMat[0][0] * bf->x + rMat[0][1] * bf->y + rMat[0][2] * bf->z;
+    ef->y = rMat[1][0] * bf->x + rMat[1][1] * bf->y + rMat[1][2] * bf->z;
+    ef->z = rMat[2][0] * bf->x + rMat[2][1] * bf->y + rMat[2][2] * bf->z;
 }
 
 /**********************************************************************************************************
@@ -138,9 +138,9 @@ void Vector_From_BodyFrame2EarthFrame(Vector3f_t *bf, Vector3f_t *ef)
 **********************************************************************************************************/
 void Vector_From_EarthFrame2BodyFrame(Vector3f_t *ef, Vector3f_t *bf)
 {
-  bf->x = rMat[0][0] * ef->x + rMat[1][0] * ef->y + rMat[2][0] * ef->z;
-  bf->y = rMat[0][1] * ef->x + rMat[1][1] * ef->y + rMat[2][1] * ef->z;
-  bf->z = rMat[0][2] * ef->x + rMat[1][2] * ef->y + rMat[2][2] * ef->z;
+    bf->x = rMat[0][0] * ef->x + rMat[1][0] * ef->y + rMat[2][0] * ef->z;
+    bf->y = rMat[0][1] * ef->x + rMat[1][1] * ef->y + rMat[2][1] * ef->z;
+    bf->z = rMat[0][2] * ef->x + rMat[1][2] * ef->y + rMat[2][2] * ef->z;
 }
 
 /**********************************************************************************************************
@@ -265,7 +265,7 @@ void ahrs_update()
     s3 *= recipNorm;
 	
 	//计算动态步长
-    BETADEF = Beta_Base + 0.025 * dt * constrain(Gyro_Length_Filter, 0, 400);
+    BETADEF = Beta_Base + 0.025f * dt * constrain(Gyro_Length_Filter, 0, 400);
 //    BETADEF -= 0.01 * (constrain(navigation_acce_length, 0, 1000) / 1000); 
     BETADEF = constrain(BETADEF, 0.0075, 0.06);
 

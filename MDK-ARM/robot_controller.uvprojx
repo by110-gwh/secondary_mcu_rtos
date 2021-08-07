@@ -274,8 +274,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x90000000</StartAddress>
-                <Size>0x1000000</Size>
+                <StartAddress>0x8000000</StartAddress>
+                <Size>0x100000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F750xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\DRIVER;..\FREERTOS\include;..\FREERTOS\portable\RVDS\ARM_CM7\r0p1;..\STM32F7xx_HAL_Driver\Inc;..\SYSTEM;..\USB\hid;..\USB\STM32_USB_Device_Library\Class\CustomHID\Inc;..\USB\STM32_USB_Device_Library\Core\Inc;..\USB\USB_DEVICE;..\TASK;..\MODULE;..\USMART;..\MATH</IncludePath>
+              <IncludePath>..\CMSIS;..\DRIVER;..\FREERTOS\include;..\FREERTOS\portable\RVDS\ARM_CM7\r0p1;..\STM32F7xx_HAL_Driver\Inc;..\SYSTEM;..\USB\hid;..\USB\STM32_USB_Device_Library\Class\CustomHID\Inc;..\USB\STM32_USB_Device_Library\Core\Inc;..\USB\USB_DEVICE;..\TASK;..\MODULE;..\USMART;..\MATH;..\BSP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -360,7 +360,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>0</umfTarg>
+            <umfTarg>1</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -369,7 +369,7 @@
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\robot_controller.sct</ScatterFile>
+            <ScatterFile>.\robot_controller\robot_controller.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -381,6 +381,18 @@
       <Groups>
         <Group>
           <GroupName>bsp</GroupName>
+          <Files>
+            <File>
+              <FileName>mpu6050.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\mpu6050.c</FilePath>
+            </File>
+            <File>
+              <FileName>w25q.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\w25q.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>driver</GroupName>
@@ -401,24 +413,14 @@
               <FilePath>..\DRIVER\time_cnt.c</FilePath>
             </File>
             <File>
-              <FileName>mpu6050.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\DRIVER\mpu6050.c</FilePath>
-            </File>
-            <File>
-              <FileName>i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\DRIVER\i2c.c</FilePath>
-            </File>
-            <File>
               <FileName>qspi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\DRIVER\qspi.c</FilePath>
             </File>
             <File>
-              <FileName>w25q.c</FileName>
+              <FileName>i2c1.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\DRIVER\w25q.c</FilePath>
+              <FilePath>..\DRIVER\i2c1.c</FilePath>
             </File>
           </Files>
         </Group>

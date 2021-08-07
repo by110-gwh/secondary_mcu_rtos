@@ -16,43 +16,37 @@ xTaskHandle imu_temp_task_handle;
 //任务退出标志
 volatile uint8_t imu_temp_task_exit;
 //温度控制PID
-pid_controler_t imu_temp_pid;
+pid_paramer_t imu_temp_pid_data_para = {
+    .integrate_max = 30,
+    .kp = 30,
+    .ki = 0.5,
+    .kd = 0,
+    .control_output_limit = 100
+};
+
+pid_data_t imu_temp_pid_data;
 
 /**********************************************************************************************************
-*函 数 名: imu_temp_pid_init
+*函 数 名: imu_temp_pid_data_init
 *功能说明: 传感器恒温控制PID初始化
 *形    参: 无
 *返 回 值: 无
 **********************************************************************************************************/
-static void imu_temp_pid_init(void)
+static void imu_temp_pid_data_init(void)
 {
-    imu_temp_pid.last_expect = 0;
-    imu_temp_pid.expect = 0;
-    imu_temp_pid.feedback = 0;
+    imu_temp_pid_data.expect = 0;
+    imu_temp_pid_data.feedback = 0;
 
-    imu_temp_pid.err = 0;
-    imu_temp_pid.last_err = 0;
-    imu_temp_pid.err_max = 0;
+    imu_temp_pid_data.err = 0;
+    imu_temp_pid_data.last_err = 0;
+    imu_temp_pid_data.integrate = 0;
+    imu_temp_pid_data.dis_err = 0;
 
-    imu_temp_pid.integrate_separation_err = 2;
-    imu_temp_pid.integrate = 0;
-    imu_temp_pid.integrate_max = 30;
+    imu_temp_pid_data.control_output = 0;
 
-    imu_temp_pid.dis_err = 0;
-
-    imu_temp_pid.kp = 30;
-    imu_temp_pid.ki = 0.5;
-    imu_temp_pid.kd = 0;
-    
-    imu_temp_pid.feedforward_kp = 0;
-    imu_temp_pid.feedforward_kd = 0;
-
-    imu_temp_pid.control_output = 0;
-    imu_temp_pid.control_output_limit = 100;
-
-    imu_temp_pid.short_circuit_flag = 0;
-    imu_temp_pid.err_callback = NULL;
-    imu_temp_pid.pri_data = NULL;
+    imu_temp_pid_data.short_circuit_flag = 0;
+    imu_temp_pid_data.err_callback = NULL;
+    imu_temp_pid_data.pri_data = NULL;
 }
 
 /**********************************************************************************************************
@@ -88,22 +82,21 @@ portTASK_FUNCTION(imu_temp_task, pvParameters)
     uint8_t count;
     
     imu_temp_gpio_init();
-    imu_temp_pid_init();
+    imu_temp_pid_data_init();
     count = 0;
-    while (!imu_temp_task_exit)
-    {
+    while (!imu_temp_task_exit) {
         
         //温度PID控制
         if (count == 100) {
-            imu_temp_pid.feedback = tempDataFilter;
-            imu_temp_pid.expect = 50;
-            pid_control(&imu_temp_pid);
+            imu_temp_pid_data.feedback = tempDataFilter;
+            imu_temp_pid_data.expect = 50;
+            pid_control(&imu_temp_pid_data, &imu_temp_pid_data_para);
         }
         
         //模拟PWM输出
         if (count == 100)
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
-        else if (count >= imu_temp_pid.control_output)
+        else if (count >= imu_temp_pid_data.control_output)
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
         
         if (count == 100)
@@ -111,7 +104,7 @@ portTASK_FUNCTION(imu_temp_task, pvParameters)
         else
             count++;
         
-        //睡眠5ms
+        //睡眠1ms
         vTaskDelay(1);
     }
 	vTaskDelete(NULL);

@@ -11,12 +11,11 @@ struct _m_usmart_nametab usmart_nametab[] = {
 #if USMART_USE_WRFUNS==1
 	(void*)read_addr,"u32 read_addr(u32 addr)",
 	(void*)write_addr,"void write_addr(u32 addr,u32 val)",
+#endif	
 	(void*)gyro_calibration,"void gyro_calibration(void)",
 	(void*)accel_calibration,"void accel_calibration(uint8_t where)",
 
-#endif		   
-							
-};						  
+};
 
 //函数控制管理器初始化得到各个受控函数的名字得到函数总数量
 struct _m_usmart_dev usmart_dev = {
