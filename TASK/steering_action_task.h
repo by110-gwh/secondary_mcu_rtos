@@ -6,9 +6,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-extern xTaskHandle steering_action_task_handle;
 extern volatile uint8_t steering_action_task_exit;
 
-void steering_action_task_create(uint8_t action_group);
+void steering_action_task_create(uint8_t action_group, uint16_t run_cnt);
 
 #endif

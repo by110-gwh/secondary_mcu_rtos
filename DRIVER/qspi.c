@@ -9,7 +9,7 @@ static QSPI_HandleTypeDef hqspi;
 *形    参: 要发送的指令 发送到的目的地址 有无地址 空指令周期数 数据数量
 *返 回 值: 无
 **********************************************************************************************************/
-void spi_send_cmd(uint8_t cmd, uint32_t addr, uint8_t has_addr, uint8_t dummt_cycles, uint8_t count)
+void spi_send_cmd(uint8_t cmd, uint32_t addr, uint8_t has_addr, uint8_t dummt_cycles, uint32_t count)
 {
 	QSPI_CommandTypeDef s_command;
     s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;

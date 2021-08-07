@@ -13,6 +13,8 @@ typedef struct {
 	short gyro_x_offset;
 	short gyro_y_offset;
 	short gyro_z_offset;
+    uint16_t action_num[231];
+    int8_t steering_offset[32];
 	uint8_t inited;
 } paramer_save_t;
 

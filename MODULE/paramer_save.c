@@ -3,8 +3,8 @@
 #include "stm32f7xx_hal.h"
 #include "w25q.h"
 
-//参数保存地址
-#define PARAMETER_SAVE_ADDR 0x7F8000
+//参数保存地址，必须4K字节对齐
+#define PARAMETER_SAVE_ADDR 0xBBB000
 
 //保存的参数结构体
 volatile paramer_save_t paramer_save_data;
@@ -27,6 +27,11 @@ void save_paramer_init()
 	paramer_save_data.gyro_x_offset = 0;
 	paramer_save_data.gyro_y_offset = 0;
 	paramer_save_data.gyro_z_offset = 0;
+    uint8_t i;
+    for (i = 0; i < 231; i++)
+        paramer_save_data.action_num[i] = 0;
+    for (i = 0; i < 32; i++)
+        paramer_save_data.steering_offset[i] = 0;
 }
 
 /**********************************************************************************************************

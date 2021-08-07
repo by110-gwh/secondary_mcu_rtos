@@ -34,24 +34,24 @@ portTASK_FUNCTION(steering_updata_task, pvParameters)
 		uint8_t i;
         if (!steering_updata_task_hang) {
             //16通道舵机遍历一遍
-            for (i = 0; i < 16; i++) {
+            for (i = 0; i < 32; i++) {
                 //需要更新舵机角度
                 if (steering_pulse_ch[i] != steering_position[i]) {
                     //初始赋值
-                    if (steering_pulse_ch[i] == 0)
+                    if (steering_pulse_ch[i] == 0 || steering_speed[i] == 0)
                         steering_pulse_ch[i] = steering_position[i];
                     //角度减小方向
-                    else if(steering_pulse_ch[i] > steering_position[i]) {
+                    else if(steering_speed[i] < 0) {
                         //根据差值选择步进
                         if (steering_pulse_ch[i] - steering_position[i] >= steering_speed[i])
-                            steering_pulse_ch[i] -=  steering_speed[i];
+                            steering_pulse_ch[i] += steering_speed[i];
                         else
                             steering_pulse_ch[i] = steering_position[i];
                     //角度增大方向
                     } else {
                         //根据差值选择步进
                         if (steering_position[i] - steering_pulse_ch[i] >= steering_speed[i])
-                            steering_pulse_ch[i] +=  steering_speed[i];
+                            steering_pulse_ch[i] += steering_speed[i];
                         else
                             steering_pulse_ch[i] = steering_position[i];
                     }

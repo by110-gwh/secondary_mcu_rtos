@@ -9,11 +9,11 @@
 //ÐòÁÐºÅ×Ö·û´®³¤¶È
 #define USB_SIZ_STRING_SERIAL 0x1A
 
-#define USBD_VID 0x1920
-#define USBD_PID 0x0100
+#define USBD_VID 0x0483
+#define USBD_PID 0x5750
 #define USBD_LANGID_STRING 0x0409
-#define USBD_MANUFACTURER_STRING "Wit-Device"
-#define USBD_PRODUCT_STRING "Wit-Motion "
+#define USBD_MANUFACTURER_STRING "MyUSB_HID"
+#define USBD_PRODUCT_STRING "LOBOT"
 #define USBD_CONFIGURATION_STRING "Custom HID Config"
 #define USBD_INTERFACE_STRING "Custom HID Interface"
 
@@ -168,6 +168,8 @@ uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
 	*length = USB_SIZ_STRING_SERIAL;
 	Get_SerialNum();
+    USBD_StringSerial[2] = '4';
+    USBD_StringSerial[4] = '9';
 	return (uint8_t *) USBD_StringSerial;
 }
 
