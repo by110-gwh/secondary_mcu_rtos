@@ -5,7 +5,7 @@ static TIM_HandleTypeDef htim6;
 volatile uint32_t TIME_ISR_CNT;
 //系统时间
 Time_t Time_Sys;
-
+time_t sys_time;
 /**********************************************************************************************************
 *函 数 名: Get_Time_Init
 *功能说明: 时间周期计数模块初始化
@@ -84,4 +84,70 @@ void Get_Time_Period(Testime *Time_Lab)
 	//单位us
 	Time_Lab->Now_Time = 10000 * TIME_ISR_CNT + TIM6->CNT;
 	Time_Lab->Time_Delta = Time_Lab->Now_Time - Time_Lab->Last_Time;
+}
+
+/**********************************************************************
+  * @Name    sys_time_init
+  * @declaration : init for the time_t structure 
+  * @param   ptr: [输入/出]  pointer of the count var,must 1us 
+**			 mode: [输入/出]  count_mode  up/dowm
+**			 period: [输入/出] count_period_val
+  * @retval   : void
+  * @author  peach99CPP
+***********************************************************************/
+
+void sys_time_init(uint32_t * ptr, count_mode mode, uint32_t period)
+{
+    sys_time.sys_time_ptr = ptr;
+    sys_time.mode = mode;
+    sys_time.period_val = period;
+}
+
+/**********************************************************************
+  * @Name    delay_us
+  * @declaration : delay function In milliseconds
+  * @param   us: [输入/出]  us value
+  * @retval   : void
+  * @author  peach99CPP
+***********************************************************************/
+
+void delay_us(uint32_t us)
+{
+    uint32_t old_time, now_time, time_cnt;
+    time_cnt = us;
+    old_time = *sys_time.sys_time_ptr;
+    if(sys_time.mode == up_count)
+    {
+        while(time_cnt > 0)
+        {
+            now_time = *sys_time.sys_time_ptr;
+            if(now_time >= old_time) time_cnt -= (now_time - old_time);
+            else time_cnt -= (now_time  - old_time + sys_time.period_val);
+            old_time = now_time;
+        }
+    }
+    else
+    {
+
+        while(time_cnt > 0)
+        {
+            now_time = *sys_time.sys_time_ptr;
+            if(now_time <= old_time) time_cnt -= old_time - now_time;
+            else time_cnt -= (old_time - now_time + sys_time.period_val);
+            old_time = now_time;
+        }
+    }
+}
+
+/**********************************************************************
+  * @Name    delay_ms
+  * @declaration : delay ms implementation based on delay_us
+  * @param   ms: [输入/出] 
+  * @retval   :
+  * @author  peach99CPP
+***********************************************************************/
+
+void delay_ms(uint32_t ms)
+{
+    delay_us(1000*ms);
 }
