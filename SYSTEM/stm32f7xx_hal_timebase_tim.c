@@ -28,6 +28,17 @@ TIM_HandleTypeDef        htim7;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
+/**********************************************************************************************************
+*函 数 名: HAL_TIM_PeriodElapsedCallback
+*功能说明: 定时器溢出更新中断回调函数
+*形    参: 定时器句柄
+*返 回 值: 无
+**********************************************************************************************************/
+void HAL_TIM7_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    HAL_IncTick();
+}
+
 /**
   * @brief  This function configures the TIM7 as a time base source.
   *         The time source is configured  to have 1ms time base with a dedicated
@@ -74,6 +85,7 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
   if(HAL_TIM_Base_Init(&htim7) == HAL_OK)
   {
+    htim7.PeriodElapsedCallback = HAL_TIM7_PeriodElapsedCallback;
     /* Start the TIM time Base generation in interrupt mode */
     return HAL_TIM_Base_Start_IT(&htim7);
   }

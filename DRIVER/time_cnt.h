@@ -25,5 +25,6 @@ extern Time_t Time_Sys;
 
 void Get_Time_Init(void);
 void Get_Time_Period(Testime *Time_Lab);
+void delay_us(uint32_t nus);
 #endif
 
