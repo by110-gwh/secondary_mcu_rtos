@@ -422,6 +422,16 @@
               <FileType>1</FileType>
               <FilePath>..\DRIVER\i2c1.c</FilePath>
             </File>
+            <File>
+              <FileName>motor_pwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\DRIVER\motor_pwm.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_encode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\DRIVER\motor_encode.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -676,6 +686,11 @@
               <FileName>imu_temp_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\TASK\imu_temp_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>motion_control_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TASK\motion_control_task.c</FilePath>
             </File>
           </Files>
         </Group>
