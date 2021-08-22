@@ -8,6 +8,7 @@
 #include "imu_temp_task.h"
 #include "qspi.h"
 #include "motion_control_task.h"
+#include "route_task.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -39,6 +40,9 @@ portTASK_FUNCTION(main_task, parameters)
     ahrs_task_create();
     imu_temp_task_create();
     motion_control_task_create();
+    vTaskDelay(200);
+    route_task_create();
+    
     while (!main_task_exit) {
 		vTaskDelay(1000);
     }

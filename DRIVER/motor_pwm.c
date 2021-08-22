@@ -101,7 +101,7 @@ void motor_pwm_init()
 /**********************************************************************************************************
 *函 数 名: motor_pwm_set
 *功能说明: PWM输出设置
-*形    参: 通道一PWM值 通道二PWM值 通道三PWM值 通道四PWM值
+*形    参: 左前电机PWM值 左后电机PWM值 右前电机PWM值 右后电机PWM值
 *返 回 值: 无
 **********************************************************************************************************/
 void motor_pwm_set(int pwm_lf, int pwm_lb, int pwm_rf, int pwm_rb)
@@ -112,7 +112,7 @@ void motor_pwm_set(int pwm_lf, int pwm_lb, int pwm_rf, int pwm_rb)
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
     } else {
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pwm_rf);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, -pwm_rf);
     }
     
     if (pwm_rb > 0) {
@@ -120,7 +120,7 @@ void motor_pwm_set(int pwm_lf, int pwm_lb, int pwm_rf, int pwm_rb)
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
     } else {
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, pwm_rb);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -pwm_rb);
     }
     
     if (pwm_lf > 0) {
@@ -128,7 +128,7 @@ void motor_pwm_set(int pwm_lf, int pwm_lb, int pwm_rf, int pwm_rb)
         __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_4, 0);
     } else {
         __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
-        __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_4, pwm_lf);
+        __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_4, -pwm_lf);
     }
     
     if (pwm_lb > 0) {
@@ -136,6 +136,6 @@ void motor_pwm_set(int pwm_lf, int pwm_lb, int pwm_rf, int pwm_rb)
         __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, 0);
     } else {
         __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
-        __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pwm_lb);
+        __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, -pwm_lb);
     }
 }

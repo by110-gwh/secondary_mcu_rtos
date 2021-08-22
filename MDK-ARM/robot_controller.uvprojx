@@ -692,6 +692,11 @@
               <FileType>1</FileType>
               <FilePath>..\TASK\motion_control_task.c</FilePath>
             </File>
+            <File>
+              <FileName>route_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TASK\route_task.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

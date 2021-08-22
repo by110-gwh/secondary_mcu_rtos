@@ -4,11 +4,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
-extern QueueHandle_t motor_encode_lf_queue;
-extern QueueHandle_t motor_encode_lb_queue;
-extern QueueHandle_t motor_encode_rf_queue;
-extern QueueHandle_t motor_encode_rb_queue;
-
 void motor_encode_init(void);
+void motor_encode_get(float *encode_lf, float *encode_lb, float *encode_rf, float *encode_rb);
 
 #endif

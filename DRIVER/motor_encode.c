@@ -1,10 +1,10 @@
 #include "motor_encode.h"
 #include "stm32f7xx_hal.h"
 
-QueueHandle_t motor_encode_lf_queue;
-QueueHandle_t motor_encode_lb_queue;
-QueueHandle_t motor_encode_rf_queue;
-QueueHandle_t motor_encode_rb_queue;
+static QueueHandle_t motor_encode_lf_queue;
+static QueueHandle_t motor_encode_lb_queue;
+static QueueHandle_t motor_encode_rf_queue;
+static QueueHandle_t motor_encode_rb_queue;
 
 static TIM_HandleTypeDef htim3;
 static TIM_HandleTypeDef htim5;
@@ -133,6 +133,89 @@ void motor_encode_init()
 }
 
 /**********************************************************************************************************
+*函 数 名: motor_encode_get
+*功能说明: 获取电机编码器值
+*形    参: 左前编码器值 左后编码器值 右前编码器值 右后编码器值
+*返 回 值: 无
+**********************************************************************************************************/
+void motor_encode_get(float *encode_lf, float *encode_lb, float *encode_rf, float *encode_rb)
+{
+    static float last_encode_lf;
+    static float last_encode_lb;
+    static float last_encode_rf;
+    static float last_encode_rb;
+    int motor_encode;
+    int motor_encode_sum;
+    int motor_encode_cnt;
+    
+    //右前方电机
+    motor_encode_sum = 0;
+    motor_encode_cnt = 0;
+    while (xQueueReceive(motor_encode_rf_queue, &motor_encode, 0) == pdPASS) {
+        if (motor_encode == 0xFFFFFFFF) {
+            last_encode_rf = 0;
+            break;
+        }
+        motor_encode_sum += motor_encode;
+        motor_encode_cnt++;
+    }
+    if (motor_encode_cnt) {
+        motor_encode_sum /= motor_encode_cnt;
+        last_encode_rf = 1000000.0 / motor_encode_sum;
+    }
+    //右后方电机
+    motor_encode_sum = 0;
+    motor_encode_cnt = 0;
+    while (xQueueReceive(motor_encode_rb_queue, &motor_encode, 0) == pdPASS) {
+        if (motor_encode == 0xFFFFFFFF) {
+            last_encode_rb = 0;
+            break;
+        }
+        motor_encode_sum += motor_encode;
+        motor_encode_cnt++;
+    }
+    if (motor_encode_cnt) {
+        motor_encode_sum /= motor_encode_cnt;
+        last_encode_rb = 1000000.0 / motor_encode_sum;
+    }
+    //左前方电机
+    motor_encode_sum = 0;
+    motor_encode_cnt = 0;
+    while (xQueueReceive(motor_encode_lf_queue, &motor_encode, 0) == pdPASS) {
+        if (motor_encode == 0xFFFFFFFF) {
+            last_encode_lf = 0;
+            break;
+        }
+        motor_encode_sum += motor_encode;
+        motor_encode_cnt++;
+    }
+    if (motor_encode_cnt) {
+        motor_encode_sum /= motor_encode_cnt;
+        last_encode_lf = 1000000.0 / motor_encode_sum;
+    }
+    //左后方电机
+    motor_encode_sum = 0;
+    motor_encode_cnt = 0;
+    while (xQueueReceive(motor_encode_lb_queue, &motor_encode, 0) == pdPASS) {
+        if (motor_encode == 0xFFFFFFFF) {
+            last_encode_lb = 0;
+            break;
+        }
+        motor_encode_sum += motor_encode;
+        motor_encode_cnt++;
+    }
+    if (motor_encode_cnt) {
+        motor_encode_sum /= motor_encode_cnt;
+        last_encode_lb = 1000000.0 / motor_encode_sum;
+    }
+    
+    *encode_lf = last_encode_lf;
+    *encode_lb = last_encode_lb;
+    *encode_rf = last_encode_rf;
+    *encode_rb = last_encode_rb;
+}
+
+/**********************************************************************************************************
 *函 数 名: TIM3_IRQHandler
 *功能说明: 定时器3中断函数
 *形    参: 无
@@ -195,7 +278,6 @@ void TIM3_IRQHandler(void)
             xQueueSendFromISR(motor_encode_lf_queue, &send_data, &xHigherPriorityTaskWoken);
             portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         }
-                
         __HAL_TIM_CLEAR_FLAG(&htim3, TIM_FLAG_UPDATE);
     }
 }
@@ -207,7 +289,6 @@ void TIM3_IRQHandler(void)
 *形    参: 无
 *返 回 值: 无
 **********************************************************************************************************/
-#include <stdio.h>
 void TIM5_IRQHandler(void)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -228,7 +309,6 @@ void TIM5_IRQHandler(void)
         rf_last_updata_cnt = tim5_updata_cnt;
         //通过队列发送编码器值
         xQueueSendFromISR(motor_encode_rf_queue, &motor_speed_rf, &xHigherPriorityTaskWoken);
-        printf("%d\r\n", motor_speed_rf);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         __HAL_TIM_CLEAR_FLAG(&htim5, TIM_FLAG_CC1);
     }
@@ -266,7 +346,6 @@ void TIM5_IRQHandler(void)
             xQueueSendFromISR(motor_encode_rf_queue, &send_data, &xHigherPriorityTaskWoken);
             portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         }
-                
         __HAL_TIM_CLEAR_FLAG(&htim5, TIM_FLAG_UPDATE);
     }
 }
